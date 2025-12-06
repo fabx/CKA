@@ -1,4 +1,4 @@
-# CKA
+CKA
 
 Book the exam.
 
@@ -18,7 +18,7 @@ Configure KodeKloud on discord.
 https://discord.gg/VAfhT6ZR9E
 
 
-## LINKS
+##LINKS##
 
 https://notes.kodekloud.com/docs/CKA-Certification-Course-Certified-Kubernetes-Administrator/Introduction/Course-Introduction
 
@@ -33,7 +33,7 @@ https://helm.sh/docs
 https://gateway-api.sigs.k8s.io/
 
 
-## MY LINKS
+##MY LINKS
 
 The bookmark is no more available.
 
@@ -57,7 +57,7 @@ https://raghu.sh/new-cka-exam-tips-tricks-ft-gateway-api-cni-cri-csi-helm-kustom
 
 
 
-## QUESTIONS
+##QUESTIONS##
 
 Only one monitor is accepted ?
 - Replicate the monitors.
@@ -66,11 +66,11 @@ Only one monitor is accepted ?
 - ...
 
 Where can I find the documentation about kustomize ?
-Can I use the sig kubernetes GitHub kustomize documentation ?k
+Can I use the sig kubernetes GitHub kustomize documentation ?
 How could I get the same as kubectl explain kustomization ?
 
 
-## TODO
+##TODO##
 
 Take the official simulation: 2 mock exams
 Killer.sh
@@ -152,7 +152,7 @@ kubectl create deployment --image=httpd:2.4-alpine httpd-frontend --replicas=3 -
 #OK
 
 
-# Service
+#Service
 - nodeport (from the service perspective)
   - nodeprort #on each node in the range 30000 - 32767
   - port #on the clusterIP
@@ -196,19 +196,6 @@ kubectl expose ... -> need edit to change nodePort
 
 kubectl expose --help
 #recommended !!!
-
-
-kubectl expose deployment hr-webapp --type=nodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml
-#Then vi and change the nodePort because this is not an option
-
-
-Resource            Trick to Generate
-DaemonSet           Create Deployment YAML -> Change Kind -> Delete replicas
-StatefulSet         Create Deployment YAML -> Change Kind -> Add serviceName
-Ingress             kubectl create ingress ... (It exists!)
-CronJobkubectl      create cronjob ...
-Service (NodePort)  kubectl expose deploy ... --type=NodePort --dry-run=client -o yaml
-PVC / NetPol        No generator. Use kubectl explain or copy existing.
 
 
 Imperative commands
@@ -289,6 +276,25 @@ Static pods for the control plane components they are ignored by kubescheduler
 Chicken and egg problem: This allows the essential control plane services to start up before the API server is fully operational, solving the bootstrapping challenge.
 kubectl run --restart=Never --image=busybox static-busybox --dry-run=client -o yaml --command -- sleep 1000 > /etc/kubernetes/manifests/static-busybox.yaml
 #OK
+
+root@controlplane:~# kubectl get pods --all-namespaces -o wide  | grep static-greenbox
+default       static-greenbox-node01                 1/1     Running   0          19s     10.244.1.2   node01       <none>           <none>
+root@controlplane:~#
+
+root@controlplane:~# ssh node01 
+root@node01:~# ps -ef |  grep /usr/bin/kubelet 
+root        4147       1  0 14:05 ?        00:00:00 /usr/bin/kubelet --bootstrap-kubeconfig=/etc/kubernetes/bootstrap-kubelet.conf --kubeconfig=/etc/kubernetes/kubelet.conf --config=/var/lib/kubelet/config.yaml --container-runtime-endpoint=unix:///var/run/containerd/containerd.sock --pod-infra-container-image=registry.k8s.io/pause:3.9
+root        4773    4733  0 14:05 pts/0    00:00:00 grep /usr/bin/kubelet
+
+root@node01:~# grep -i staticpod /var/lib/kubelet/config.yaml
+staticPodPath: /etc/just-to-mess-with-you
+
+root@node01:~#
+
+root@node01:/etc/just-to-mess-with-you# ls
+greenbox.yaml
+root@node01:/etc/just-to-mess-with-you# rm -rf greenbox.yaml 
+root@node01:/etc/just-to-mess-with-you#
 
 Priority classes
 Not used
@@ -445,8 +451,6 @@ Env:
   - name: APP_COLOR
     ValueFrom:
       secretKeyRef: xxxx
-        Name: XXX
-        Key: xxxx
 
 
 ###
@@ -720,11 +724,11 @@ etcdctl snapshot save
 etcdctl snapshot restore
 
 Kube api-server stop
-etcdctl restore
+Etcdctl restore
 -> new data dir created
 
 Systemctl daemon-reoad
-service etcd restart
+Service etcd restart
 
 ###
 Working with etcdctl and etcdutl
@@ -781,7 +785,7 @@ Certificate details.
 
 Openssl tool.
 
-Memotechnique: GENRSA(key) - REQ(csr) - X509(crt)
+Memotechnique: GENRSA - REQ - X509
 
 1. CA.
 openssl genrsa -out ca.key 2048
@@ -835,29 +839,6 @@ https://kubernetes.io/docs/setup/best-practices/certificates/
 cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep crt
 openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
 #OK
-
-
-Use of openssl
-
-The typical openssl usage is genrsa - req - x509
-
-openssl genrsa -out ca.key 2048
--> ca.key
-
-openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr
--> ca.csr
-
-openssl x509 -req -in ca.csr -signkey ca.key -out ca.crt
--> ca.crt
-
-Check certificate validity
-
-openssl x509 -in certificate.crt -noout -text
-
-openssl s_client -connect google.com:443 2>/dev/null | openssl x509 -noout -text
-
-#######
-
 
 crictl ps
 
@@ -1061,8 +1042,8 @@ Egress:
     - ipBlocl:
         cidr: 192.168.3.13/32
     Ports:
-    - protocol: TCP
-      port: 80
+      - protocol: TCP
+        port: 80
 
     
 Flannel does not support Network Policies
@@ -1420,14 +1401,12 @@ curl http://web-service
 curl http://web-service.apps
 curl http://web-service.apps.svc
 curl http://web-service.apps.svc.cluster.local
-curl http://<service>.<namespace>.svc.cluster.local
 
 For pods disable by default in Corefile
 curl http://10-244-2-5
 curl http://10-244-2-5.apps
 curl http://10-244-2-5.apps.pod
 curl http://10-244-2-5.apps.pod.cluster.local
-curl http://<IP>.<namespace>.pod.cluster.local
 
 ###
 CoreDNS in kubernetes
@@ -1514,94 +1493,6 @@ kubectl get pods -n nginx-gateway
 kubectl get svc -n nginx-gateway nginx-gateway -o yaml
 
 ###
-
-A gateway can accept routes from all namespaces
-
-# Create the Gateway
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: web-gateway
-  namespace: nginx-gateway
-spec:
-  gatewayClassName: nginx
-  listeners:
-  - name: http
-    port: 80
-    protocol: HTTP
-    allowedRoutes: # -> !!!
-      namespaces:
-        from: All
-
-###
-
-Migrate from ingress to gateway
-
-1. Install a gateway controller
-
-Nginx, contour, Istio, ...
-
-2. Create the gateway resource
-
-apiVersion: gateway.networking.k8s.io/v1
-kind: Gateway
-metadata:
-  name: my-gateway
-spec:
-  gatewayClassName: my-gateway-class # from gateway controller
-  listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
-    hostname: "example.com"
-
-3. Create the HttpRoute
-
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: my-app-route
-spec:
-  parentRefs:
-  - name: my-gateway # from gateway
-  hostnames:
-  - "example.com"
-  rules:
-  - matches:
-    - path:
-        type: PathPrefix
-        value: /
-    backendRefs:
-    - name: my-service
-      port: 80
-
-###
-
-kubectl create -n default -f - <<EOF
-apiVersion: gateway.networking.k8s.io/v1
-kind: HTTPRoute
-metadata:
-  name: web-route
-  namespace: default
-spec:
-  parentRefs: # do not forget parentRefs referencing gateway
-    - name: web-gateway
-      namespace: default
-  rules:
-    - matches:
-        - path:
-            type: PathPrefix
-            value: /
-      backendRefs:
-        - name: web-service
-          port: 80
-          weight: 80
-        - name: web-service-v2
-          port: 80
-          weight: 20
-EOF
-
-###
 Design a Kubernetes cluster
 
 ###
@@ -1617,29 +1508,160 @@ ETCD in HA
 Introduction to deployment
 
 ###
-KUBEADM
-Cluster installation
+Demo with Kubeadm - Provision VMs with Vagrant
 
-sudo apt-mark unhold kubeadm && \
-sudo apt-get update && sudo apt-get install -y kubeadm='1.33.0-1.1' && \
-sudo apt-mark hold kubeadm
+brew install vagrant
+#OK
 
-sudo apt-mark unhold kubelet kubectl && \
-sudo apt-get update && sudo apt-get install -y kubelet='1.33.0-1.1' kubectl='1.33.0-1.1' && \
-sudo apt-mark hold kubelet kubectl
+brew install virtualbox
+#OK
 
-systemctl daemon-reload
-systemctl restart kubelet
+brew install multipass
+#OK
 
 
-#######
+https://github.com/kodekloudhub/certified-kubernetes-administrator-course
 
-Install a Debian package
+git clone https://github.com/kodekloudhub/certified-kubernetes-administrator-course.git
+cd certified-kubernetes-administrator-course/kubeadm-clusters/apple-silicon
+#OK
 
-dpkg -i ...
+#PB
+start failed: cannot connect to the multipass socket
 
-systemctl start cri-docker
-systemctl enable cri-docker
+#SOL 
+sudo launchctl stop com.canonical.multipassd
+sudo launchctl start com.canonical.multipassd
+
+#PB
+...
+
+#SOL
+multipass start
+
+#PB
+shell failed: ssh connection failed: 'Failed to connect: No route to host'
+
+#SOL 
+No firewall
+multipass stop --all
+multipass start --all
+Reboot Mac book to probably solve the DHCP issue.
+
+#OKOKOK
+
+Continue from ...
+https://github.com/kodekloudhub/certified-kubernetes-administrator-course/blob/master/kubeadm-clusters/apple-silicon/docs/03-connectivity.md
+
+... bypassing ssh setup from ontrolplane to nodes until now ...
+I continue with the Multipass ssh <node>
+
+https://github.com/kodekloudhub/certified-kubernetes-administrator-course/blob/master/kubeadm-clusters/generic/04-node-setup.md
+
+#OK
+
+https://github.com/kodekloudhub/certified-kubernetes-administrator-course/blob/master/kubeadm-clusters/generic/05-controlplane.md
+
+On the control plane ...
+
+POD_CIDR=10.244.0.0/16
+SERVICE_CIDR=10.96.0.0/16
+#OK
+
+sudo kubeadm init --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --apiserver-advertise-address $PRIMARY_IP
+#OK
+
+sudo kubeadm init --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR --apiserver-advertise-address $PRIMARY_IP
+error: flag needs an argument: --apiserver-advertise-address
+To see the stack trace of this error execute with --v=5 or higher
+So missing PRIMARY_IP
+Exporting PRIMARY_IP s ...
+And re run
+cat <<EOF | sudo tee /etc/default/kubelet
+KUBELET_EXTRA_ARGS='--node-ip ${PRIMARY_IP}'
+EOF
+On all nodes
+#OK
+
+On worker nodes ...
+sudo kubeadm join 192.168.1.58:6443 --token mcs5m3.wyis5wz1edo5jzjz \
+	--discovery-token-ca-cert-hash sha256:1bee514a230653554eee5ad4e024d7325f25e53504106d0c72e3068fb7a13291
+#OK
+
+On master
+{
+    mkdir ~/.kube
+    sudo cp /etc/kubernetes/admin.conf ~/.kube/config
+    sudo chown $(id -u):$(id -g) ~/.kube/config
+    chmod 600 ~/.kube/config
+}
+And 
+kubectl get pods -n kube-system
+#OKOKOK
+
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.1/manifests/tigera-operator.yaml
+#OK
+
+curl -LO https://raw.githubusercontent.com/projectcalico/calico/v3.30.1/manifests/custom-resources.yaml
+sed -i "s#192.168.0.0/16#$POD_CIDR#" custom-resources.yaml
+kubectl apply -f custom-resources.yaml
+#OK
+
+watch kubectl get tigerastatus
+#OK
+
+kubectl get pods -n kube-system
+#OK
+
+#OKOKOK 
+#OKOKOK 
+
+#TODO Get the command lines from Demo - Deployment with kubeadm ??? ??? ??? !!! !!! !!!
+
+###
+Practice test - Deploy a kubernetes cluster using kubeadm
+
+
+From ...
+https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+
+sudo apt-get update
+# apt-transport-https may be a dummy package; if so, you can skip that package
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+#OK
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.33/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+#Change the version !
+#OK
+
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+#Change the version
+#OK
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+#OK
+
+From ...
+https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/
+
+vi kubeadm-config.yaml
+# kubeadm-config.yaml
+kind: ClusterConfiguration
+apiVersion: kubeadm.k8s.io/v1beta4
+kubernetesVersion: v1.21.0
+---
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+cgroupDriver: systemd
+
+
+POD_CIDR=10.244.0.0/16
+SERVICE_CIDR=10.96.0.0/16
+
+
+kubeadm init --config kubeadm-config.yaml --apiserver-advertise-address 192.168.58.163 --pod-network-cidr $POD_CIDR --service-cidr $SERVICE_CIDR
 
 
 ###
@@ -1724,46 +1746,6 @@ You may need to use charts hooks if you need to upgrade something that is extern
 
 helm upgrade dazzling-web bitnami/nginx --version 18.3.6
 
-
-###
-
-Helm install w/o CRDs 
-
-It will skip the installation of the CRDs contained in the crds/ folder.
-You can do it by using --skip-crds
-
-###
-
-helm ls -A
-helm repo ls
-helm search repo kk-mock1/nginx
-helm upgrade kk-mock1 kk-mock1/nginx -n kk-ns --version=18.1.15
-
-
-###
-
-Use of helm template
-
-{{ .Values.myValue | quote }}: Wraps the value in quotes.
-{{ .Values.myValue | upper }}: Converts text to UPPERCASE.
-{{ .Values.myValue | default "blue" }}: Uses "blue" if myValue is missing.
-
-#in values.yaml
-envVars:
-  - name: ENV_TYPE
-    value: production
-  - name: DB_HOST
-    value: localhost
-
--> 
-
-#in templates/deployment.yaml
-env:
-  {{- range .Values.envVars }}
-  - name: {{ .name }}
-    value: {{ .value | quote }}
-  {{- end }}
-
 ###
 Kustomize problem statement
 
@@ -1785,7 +1767,7 @@ k8s/
    |  |- config-map.yaml
    |- prod/
       |- kustomization.yaml
-      - config-map.yaml
+      |- config-map.yaml
 
 You may need to update kustomize to get the latest.
 
@@ -1888,7 +1870,7 @@ Target
 
 Value
 
-## Json 6902 patch
+##Json 6902 patch##
 
 kustomization.yaml
 ---
@@ -1907,7 +1889,7 @@ patches:
         value: 5
 
 
-## Strategic merge patch
+##Strategic merge patch##
 
 kustomization.yaml
 ---
@@ -2085,14 +2067,11 @@ components:
   - ../../components/db
 
 
-###
-
-kubectl expose deployment hr-webapp --type=nodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml
-#Then vi and change the nodePort
 
 
 
-# PB
+
+#PB
 
 kubectl apply -f /root/code/project_mercury/overlays/community/
 error: error validating "/root/code/project_mercury/overlays/community/kustomization.yaml": error validating data: [apiVersion not set, kind not set]; if you choose to ignore these errors, turn validation off with --validate=false
@@ -2186,24 +2165,56 @@ kubectl config view --kubeconfig /root/my-kube-config -o=jsonpath='{.contexts[0]
 ########
 
 
-EXAM TIPS AND TRICKS
-EXAM TIPS AND TRICKS
-EXAM TIPS AND TRICKS
-EXAM TIPS AND TRICKS
+Light exam
 
-####
+sudo apt-mark unhold kubeadm && \
+sudo apt-get update && sudo apt-get install -y kubeadm='1.33.0-1.1' && \
+sudo apt-mark hold kubeadm
 
-tips for searching the documentation
+sudo apt-mark unhold kubelet kubectl && \
+sudo apt-get update && sudo apt-get install -y kubelet='1.33.0-1.1' kubectl='1.33.0-1.1' && \
+sudo apt-mark hold kubelet kubectl
 
-1. search for kind: <resource>
-2. search for unique fields: readinessProbe or nodeSelector
-3. Know if you need to search in concepts or tasks
-4. Avoid Reference: the api is ugly
-5. kubectl cheat sheet
-6. Concepts / Workloads / Workload management
+systemctl daemon-reload
+systemctl restart kubelet
 
 
-####
+#######
+
+Install a Debian package
+
+dpkg -i ...
+
+systemctl start cri-docker
+systemctl enable cri-docker
+
+
+############
+
+To expose a pod as a service !!!
+
+kubectl expose pod messaging --port xxxx --name messaging-service 
+
+OR
+
+kubectl expose deployment hr-webapp --type=nodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml
+#Then vi and change the nodePort
+
+
+
+###########
+
+helm ls -A
+helm repo ls
+helm search repo kk-mock1/nginx
+helm upgrade kk-mock1 kk-mock1/nginx -n kk-ns --version=18.1.15
+
+
+kubectl expose deploy 
+
+#########
+
+Tips and tricks
 
 kubectl api-resources
 # get all kubernetes resources
@@ -2229,13 +2240,89 @@ spec:
 
 #OK
 
-#ensure kubectl completion is enabled in kubectl quick reference ...
+#ensure kubectl copletion is enabled in kubectl quick reference ...
 
 source <(kubectl completion bash) # set up autocomplete in bash into the current shell, bash-completion package should be installed first.
 echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanently to your bash shell.
 
-###
 
+#########
+
+Migrate from ingress to gateway
+
+1. Install a gateway controller
+
+Nginx, contour, Istio, ...
+
+2. Create the gateway resource
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: my-gateway
+spec:
+  gatewayClassName: my-gateway-class # from gateway controller
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    hostname: "example.com"
+
+3. Create the HttpRoute
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: my-app-route
+spec:
+  parentRefs:
+  - name: my-gateway # from gateway
+  hostnames:
+  - "example.com"
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: my-service
+      port: 80
+
+############
+
+Helm install w/o CRDs ? What does it mean ?
+
+############
+
+Use of helm template
+#TODO
+
+############
+
+Use of openssl
+
+The typical openssl usage is genrsa - req - x509
+
+openssl genrsa -out ca.key 2048
+-> ca.key
+
+openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr
+-> ca.csr
+
+openssl x509 -req -in ca.csr -signkey ca.key -out ca.crt
+-> ca.crt
+
+Check certificate validity
+
+openssl x509 -in certificate.crt -noout -text
+
+openssl s_client -connect google.com:443 2>/dev/null | openssl x509 -noout -text
+
+
+in terraform i need to merge wi_for_buckets and wi_for_kms and to get a sub map containing only the values for gke_project_id and ksa_name
+then i need to iterate over it and to generate a string concatening the key, the value of the gke_project_id and the value of ksa_name
+
+#######
 
 crictl 
 
@@ -2243,14 +2330,14 @@ can be installed by apt on the node or by downloading the binary from github
 
 https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/
 
-crictl pods	    Lists all the pod sandboxes on the node.	                                                crictl pods
-crictl ps	      Lists all containers, and you can add -a to show all containers, including stopped ones.	crictl ps -a
-crictl images	  Lists all images available on the node.	                                                  crictl images
-crictl pull	    Pulls an image from a container registry.	                                                crictl pull nginx:latest
-crictl logs	    Fetches the logs of a specific container.	                                                crictl logs <container-id>
-crictl exec	    Runs a command inside a running container.	                                              crictl exec -it <container-id> sh
-crictl inspectp	Displays detailed status information for one or more pods.	                              crictl inspectp <pod-id>
-crictl inspect	Displays detailed status information for one or more containers.	                        crictl inspect <container-id>
+crictl pods	Lists all the pod sandboxes on the node.	crictl pods
+crictl ps	Lists all containers, and you can add -a to show all containers, including stopped ones.	crictl ps -a
+crictl images	Lists all images available on the node.	crictl images
+crictl pull	Pulls an image from a container registry.	crictl pull nginx:latest
+crictl logs	Fetches the logs of a specific container.	crictl logs <container-id>
+crictl exec	Runs a command inside a running container.	crictl exec -it <container-id> sh
+crictl inspectp	Displays detailed status information for one or more pods.	crictl inspectp <pod-id>
+crictl inspect	Displays detailed status information for one or more containers.	crictl inspect <container-id>
 
 ########
 
@@ -2277,47 +2364,46 @@ roleRef:
   name: my-pod-reader-role
   apiGroup: rbac.authorization.k8s.io
 
-x
+#########
+
+The order of operations is: `base` -> `patches` -> `generators` -> `transformers` (like `namePrefix`, `nameSuffix`, etc.).
+
 ########
 
 New last tips and tricks
 
 The `--previous` flag with `kubectl logs` is specifically designed to retrieve logs from a previous instance of a container that has crashed and restarted.
 
-A `NewReplicaSetAvailable` reason with a `Progressing` status of `False` can be a confusing symptom. It often occurs when the Pod template has not actually changed in a way that triggers a new `ReplicaSet`, such as when the `imagePullPolicy` is set to `IfNotPresent` and the old image tag is reused, preventing a new image from being pulled and the new `ReplicaSet` from becoming available.
+A `NewReplicaSetAvailable` reason with a `Progressing` status of `False` can be a confusing symptom. It often occurs when the Pod template has not actually 
+changed in a way that triggers a new `ReplicaSet`, such as when the `imagePullPolicy` is set to `IfNotPresent` and the old image tag is reused, preventing 
+a new image from being pulled and the new `ReplicaSet` from becoming available.
 
-An `emptyDir` volume is the standard method for sharing a temporary directory between containers in a multi-container Pod. It is created on the node's disk when the Pod is created and is deleted when the Pod is removed.
+An `emptyDir` volume is the standard method for sharing a temporary directory between containers in a multi-container Pod. It is created on the node's disk 
+when the Pod is created and is deleted when the Pod is removed.
 
-##
-
-CM and Secrets
-
-Kubernetes automatically updates a Pod's mounted `ConfigMap` volume with a slight delay (typically on the order of a minute) after the `ConfigMap` resource is updated. This allows the application to read the new configuration without a Pod restart.
+Kubernetes automatically updates a Pod's mounted `ConfigMap` volume with a slight delay (typically on the order of a minute) after the `ConfigMap` resource is updated. 
+This allows the application to read the new configuration without a Pod restart.
 
 Updating a Kubernetes Secret has different effects depending on how the secret is used by a pod.
-## Secret Mounted as a Volume (wait 2 minues)
+##Secret Mounted as a Volume (wait 2 minues)
 When a secret is mounted as a volume in a pod, changes to the secret are automatically updated in the pod's file system.
 This update is not instantaneous; it can take up to a minute or two for the changes to propagate. You won't need to restart the pod for it to see the new secret data.
 The pod will be able to read the new files from the mounted directory.
-## Secret Used as an Environment Variable (reload needed)
+##Secret Used as an Environment Variable (reload needed)
 When a secret is used to set an environment variable, updating the secret does not automatically update the environment variable inside the running pod
 The environment variables are set only when the pod is created. To get the new secret value, you must restart or recreate the pod.
 This is because environment variables are static and are not re-evaluated after the pod has started.
-## Secret Used from a Secret Key Reference (reload needed)
+##Secret Used from a Secret Key Reference (reload needed)
 Similar to environment variables, a secret referenced via secretKeyRef in a pod's spec to provide a single value for a field is not automatically updated.
 The value is fetched when the pod is created, and it remains static for the pod's lifetime.
 To get the new secret value, you must restart or recreate the pod.
 This applies to various fields where a secret reference might be used, such as container arguments or command.
 
+Setting the `NodeName` field in a Pod's spec directly tells the `kubelet` on that specific node to create the Pod, effectively bypassing the `kube-scheduler`.
+
 By design, Kubernetes secrets are namespaced and cannot be accessed from a Pod in a different namespace for security reasons.
 The only way for a Pod to use a secret from another namespace is to create a copy of that secret in its own namespace.
 I knew it as i use to do copy from one ns to another ns.
-
-Using a dedicated external secrets manager and mounting secrets at runtime via a CSI driver is considered a best practice for strong separation of concerns and securing secrets outside of the cluster's etcd.
-Is considered better than mounting a secret as a volume.
-
-
-##
 
 A `StatefulSet` uses a `Headless Service` (a Service with `clusterIP: None`) to provide a stable, unique DNS entry for each Pod replica.
 This, combined with the Pod's stable name, gives it a persistent network identity.
@@ -2328,31 +2414,23 @@ and connect to them individually (e.g., web-0.nginx-service.default.svc.cluster.
 Each Pod gets its own dedicated PVC, ensuring its data is persistent and not shared with other Pods. This is vital for stateful applications like databases
 where each replica needs its own storage. The PVCs and their associated PersistentVolumes (PVs) are not deleted when the StatefulSet or Pods are removed, preserving the data.
 
-##
-
-ReadWriteOnce     (RWO)   #once by node
-ReadWriteOncePod  (RWOP)  #once by pod
-ReadWriteMany     (RWX)
-ReadOnlyMany      (ROX)
-
-
-##
-
-Setting the `NodeName` field in a Pod's spec directly tells the `kubelet` on that specific node to create the Pod, effectively bypassing the `kube-scheduler`.
+ReadWriteOnce (RWO)
+ReadWriteOncePod (RWOP)
+ReadWriteMany (RWX)
+ReadOnlyMany (ROX)
 
 
 
 
-##
+
+#######################################@
 
 KCSA
 
 Setting `runAsNonRoot: true` ensures the container runs with a non-root user ID, and `readOnlyRootFilesystem: true` prevents the container from writing to its own filesystem.
 
-
-##
-
-Security
+Using a dedicated external secrets manager and mounting secrets at runtime via a CSI driver is considered a best practice for strong separation of concerns and securing secrets outside of the cluster's etcd.
+Is considered better than mounting a secret as a volume.
 
 
 The main security benefit of a `scratch` image is its minimal attack surface, as it doesn't contain a shell or operating system files that could be exploited.
@@ -2376,9 +2454,7 @@ A custom `Seccomp` profile is a JSON file that defines a specific set of allowed
 
 
 
-##
-
-Multicontainer
+############
 
 apiVersion: v1
 kind: Pod
@@ -2416,20 +2492,30 @@ spec:
     - name: shared-volume
       emptyDir: {}      #shared not persistent
 
-##
-
-Install cri docker
+#
 
 dpkg -i /root/cri-docker_0.3.16.3-0.debian.deb
 systemctl start cri-docker
 systemctl enable cri-docker
 systemctl is-active cri-docker
 systemctl is-enabled cri-docker
-systemctl daemon-reload #may be needed
 
-##
+#
 
-Install with kubeadm
+kubectl expose pod messaging --port=6379 --name messaging-service
+
+#
+
+kubectl expose deployment hr-web-app --type=NodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml > hr-web-app-service.yaml
+
+
+kubectl expose (RESOURCE) (NAME) --port=(PORT) --target-port=(TARGET_PORT)
+--port: Specifies the port the service will listen on. This is the port used by clients to connect to the service.
+--target-port: Defines the port on the pods that the service will forward traffic to.
+
+
+
+#
 
 vim /etc/apt/sources.list.d/kubernetes.list #master and node
 
@@ -2484,30 +2570,19 @@ kubectl get pods -o wide | grep gold # make sure this is scheduled on a node
 export ETCDCTL_API=3
 etcdctl snapshot save --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key --endpoints=127.0.0.1:2379 /opt/etcd-backup.db
 
-##
+##########
 
-Volumes
+Updating the container image tag in the pod template is the standard trigger for a rolling update, causing Kubernetes to create new pods with the new image.
 
 The `Retain` policy ensures the underlying storage is not deleted. The PV object transitions to a `Released` state, requiring an administrator to manually clean it up before it can be reused.
 The data remains on the volume.
 
-Rollinupdate
-
-Updating the container image tag in the pod template is the standard trigger for a rolling update, causing Kubernetes to create new pods with the new image.
-
-During a `RollingUpdate`, for a time, pods from both the old and new ReplicaSets are running simultaneously, thus consuming more resources than `Recreate`, which terminates old pods before creating new ones.
-
-
-Etcdctl
-
 etcdctl snapshot save
 etcdctl snapshot restore
 
-To restore the snapshot to a new `etcd` instance, you must have the same TLS certificates and keys that were used to secure the original cluster.
-
-
-
 The `endpointslice-controller`, which runs inside the `kube-controller-manager`, is responsible for creating and managing `EndpointSlices` based on the pods that match a service's selector.
+
+To restore the snapshot to a new `etcd` instance, you must have the same TLS certificates and keys that were used to secure the original cluster.
 
 The API server is configured with a Certificate Authority (CA). Any client certificate signed by this CA is considered authentic.
 
@@ -2517,10 +2592,25 @@ This will create a copy of my-pod but replace the container's image with busybox
 
 `kubeadm` enables automatic certificate renewal for control plane components as part of the `kubeadm upgrade` process. Running this command manually is an alternative but not the automatic mechanism.
 
+During a `RollingUpdate`, for a time, pods from both the old and new ReplicaSets are running simultaneously, thus consuming more resources than `Recreate`, which terminates old pods before creating new ones.
 
 `NetworkPolicy` resources are just objects in the API server; a CNI plugin like Calico, Cilium, or Weave Net is required to actually implement and enforce the firewall rules they define.
 
 The kubelet is a client of the API server and, like `kubectl`, uses a kubeconfig file (often located at `/etc/kubernetes/kubelet.conf`) to find the server's endpoint and credentials.
+
+#######
+
+helm ls -A
+
+helm repo ls
+
+helm repo update kk-mock1 -n kk-ns
+
+helm search repo kk-mock1/nginx -n kk-ns -l | head -n30
+
+helm upgrade kk-mock1 kk-mock1/nginx -n kk-ns --version=18.1.15
+
+helm ls -n kk-ns
 
 #########
 
@@ -2540,21 +2630,6 @@ spec:
   updatePolicy:
     updateMode: "Auto"
 EOF
-
-or ...
-
-kubectl explain vpa
-GROUP:      autoscaling.k8s.io
-KIND:       VerticalPodAutoscaler
-VERSION:    v1
-...
-->
-apiVersion: autoscaling.k8s.io/v1
-kind: VerticalPodAutoscaler
-metadata: 
-  name: vpa
-  namespace: default
-
 
 ############
 
@@ -2581,7 +2656,36 @@ kubectl create rolebinding developer-role-binding --role=developer --user=john -
 
 kubectl auth can-i update pods --as=john --namespace=development
 
-##
+
+6
+dns resolver
+
+kubectl run nginx-resolver --image=nginx
+kubectl expose pod nginx-resolver --name=nginx-resolver-service --port=80 --target-port=80 --type=ClusterIP
+
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup nginx-resolver-service
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup nginx-resolver-service > /root/CKA/nginx.svc
+
+kubectl get pod nginx-resolver -o wide
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup <P-O-D-I-P.default.pod> > /root/CKA/nginx.pod
+
+
+
+11
+helm
+
+kubectl get deploy -n <NAMESPACE> <DEPLOYMENT-NAME> -o json | jq -r '.spec.template.spec.containers[].image'
+
+helm uninstall <RELEASE-NAME> -n <NAMESPACE>
+
+
+13
+
+
+
+14
+
+############
 
 Give access alice to kubernetes cluster
 
@@ -2655,7 +2759,7 @@ kubectl config set-context alice-context --cluster=kind-my-kind --user=alice
 kubectl --context=alice-context get pods -n default
 #OKOKOK
 
-##
+###########
 
 DNS resolver
 
@@ -2677,8 +2781,12 @@ kubectl get pod nginx-resolver -o wide
 kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup 192-168-116-198.default.pod
 #OK
 
+###########
 
-##
+
+
+
+#########
 
 create use john
 
@@ -2711,24 +2819,26 @@ kubectl config set-credentials john --client-key=john.key --client-certificate=j
 kubectl create role developer --verb=create --verb=get --verb=list --verb=update --verb=delete --resource=pods
 
 
-##
+###########
+
+############
 
 Kubernetes debug and investigation tips and tricks.
 
 kubectl get events --sort-by=.metadata.creationTimestamp
-#OK in kubectl cheat sheet
+#OK
 
 kubectl get events --all-namespaces --sort-by=.metadata.creationTimestamp
-#OK in kubectl cheat sheet
+#OK
 
 kubectl logs <pod-name> -c <container-name>
-#OK in kcs
+#OK
 
 kubectl exec -it <pod-name> -- sh
-#OK in kcs
+#OK
 
 kubectl exec -it <pod-name> -c <container-name> -- sh
-#OK in kcs
+#OK
 
 #If service is unreachable
 kubectl get endpoints <service-name>
@@ -2828,9 +2938,9 @@ sudo apt-mark unhold <package>  #-> All Nodes   If a package was previously held
 sudo apt-mark hold <package>    #-> All Nodes   Re-hold the packages after the installation to prevent unintended future updates.
 
 
-# Retrieve all the images of all the pods of all the namespaces
+#Retrieve all the images of all the pods of all the namespaces
 kubectl get pods -A -o custom-columns='NAMESPACE:.metadata.namespace,POD_NAME:.metadata.name,IMAGE:.spec.containers[*].image'
-#in kcs 
+
 
 
 kubectl -n world create ingress world --rule="world.universe.mine/asia/*=asia:80" --rule="world.universe.mine/europe/*=europe:80" --class=nginx 
@@ -2852,7 +2962,7 @@ kubectl run netshoot-debug --image=nicolaka/netshoot -it --rm --restart=Never --
 
 kubectl run test-client --image=busybox --restart=Never --rm -it -- wget -O- x.x.x.x:80
 
-###
+#############
 
 Debugging Kubernetes is a structured process that moves from observing high-level status down to inspecting application code and low-level cluster components. 
 The best tips focus on a systematic drill-down using native kubectl commands before resorting to more complex tools.
@@ -2927,9 +3037,7 @@ This is critical for seeing cluster-wide trends and correlating errors across mi
 Static Analysis: Use kubectl apply --dry-run=client -f <file.yaml> to validate YAML files against the cluster's API without deploying them.
 By following these steps, you can quickly and efficiently isolate whether an issue is caused by a cluster-level constraint, a misconfiguration in your Kubernetes object, or an application-level code failure.
 
-##
-
-ip forwarding
+#########
 
 persist ip_forwarding in systemd
 
@@ -2942,17 +3050,33 @@ sudo sysctl -p /etc/sysctl.d/k8s.conf
 sysctl net.ipv4.ip_forward
 
 
-##
+############
 
+kubectl create -n default -f - <<EOF
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-route
+  namespace: default
+spec:
+  parentRefs: # do not forget parentRefs referencing gateway
+    - name: web-gateway
+      namespace: default
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: web-service
+          port: 80
+          weight: 80
+        - name: web-service-v2
+          port: 80
+          weight: 20
+EOF
 
-
-dpkg -i cri-dockerd_0.3.16.3-0.ubuntu-jammy_amd64.deb
-sudo systemctl enable --now cri-docker.service
-vi /etc/sysctl.d/k8s.conf #create the config file
-net.ipv4.ip_forward=1 #with ...
-sysctl -p #apply
-
-##
+###########
 
 pvc pending due to accessMode misma# vi pvc.yaml
 
@@ -2967,13 +3091,13 @@ spec:
   resources:
     ...
 
-##
+###########
 
 If up-to-date is 0
 do
 kubectl rollout resume deploy xxx
 
-##
+##########
 
 
 helm lint /opt/webapp-color-apd/
@@ -2981,7 +3105,7 @@ helm lint /opt/webapp-color-apd/
 helm install webapp-color-apd -n frontend-apd /opt/webapp-color-apd
 
 
-##
+###########
 
 
 kubectl create -n cka24456 -f - <<EOF
@@ -2999,363 +3123,129 @@ spec:
     updateMode: "Auto"
 EOF
 
-##
+###########
 
-codedns config is stored in a configmap
+One service can expose multiple pods
+We can use the service selector to select the pods to expose ...
+The selection is done by the labels
 
-kubectl edit cm -n kube-system coredns
+kubectl get pods --show-labels -n spectra-1267
 
-##
+and then use/modify selector in service ...
 
-wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-
-Edit the Flannel manifest to set the CIDR to 172.17.0.0/16:
-
-  net-conf.json: |
-    {
-      "Network": "172.17.0.0/16",   #Edited
-      "EnableNFTables": false,
-      "Backend": {
-        "Type": "vxlan"
-      }
-    }
-
-kubectl apply -f kube-flannel.yml
-
-
-##
-
-Systemd - systemctl
-
-in /etc/systemd/system/xxx.service
-
-[Unit]
-Description=
-Documentation
-After=postgresql.service
-
-
-[Service]
-ExecStart= /bin/bash /usr/bin/xxx.sh
-User=project_xxx
-Restart=on-failure
-RestartSec=10
-
-[Install]
-WantedBy graphical.target
-
-
-systemctl start xxx.service
-
-start restart stop
-enable disable
-
-systemctl start docker
-stop
-restart
-reload
-enable
-disable
-
-systemctl daemon-reload #after installing a package
-
-systemctl edit xxxx.service --full
-
-systemctl get-default
-systemctl set-default ...
-
-systemctl list-units --all
-systemctl list-units #only active
-
-
-journalctl 
-journalctl -b #for the current boot
-journalctl -u docker.service
-
-
-##
-
-Investigation Summary
-
-CLUSTER - NODES
-
-kubectl get componentstatuses
-kubectl get nodes
-kubectl get events --sort-by=.metadata.creationTimestamp
-
-PODS
-
-kubectl get pods
-kubectl describe pods|desploy|svc|...
-
-Tip: Check the Events section at the bottom for messages like FailedScheduling, FailedAttachVolume, or OOMKilled (Exit Code 137).
-Tip: Check the Reason under Last State: Terminated for crashed containers.
-
-Status                Cause                                             Fix Tip
-Pending               Scheduler can't place the Pod.                    Check kubectl describe pod events: Is there enough CPU/Memory on nodes? Are there Taints/Tolerations or Node Selectors preventing placement?
-ImagePullBackOff      Can't pull the container image.                   Check the image name/tag for typos, verify image exists, and ensure imagePullSecrets are configured correctly for private registries.
-CrashLoopBackOffThe   application starts and then crashes repeatedly.   The best tip here is to check the previous logs. See section 3.
-
-CONTAINER
-
-kubectl logs <pod-name>
-
-kubectl exec -it <pod-name> -c <container-name> -- /bin/bash # or /bin/sh
-kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<container-name>
-
-NETWORK
-
-kubectl get np
-kubectl get all --show-labels or kubectl 
-kubectl get endpoints <service-name> -n <namespace>
-kubectl describe service <service-name> -n <namespace>
-kubectl exec -it <pod-name> -- curl|ping <svc-name>.<namespace>.svc.cluster.local
-kubectl exec -it <pod-name> -- cat /etc/resolv.conf
-kubectl describe ingress|gateway
-kubectl run -it --rm debug --image=busybox --restart=Never -- sh
-# Inside the pod:
-wget <service-name>:<port>
-
-ADVANCED
-
-kubectl top pod
-kubectl top nodes
-kubectl apply -f <file.yaml> --dry-run=client 
-
-sudo systemctl status containerd
-
-# On the affected node (via SSH):
-sudo systemctl status kubelet
-sudo journalctl -u kubelet --since "5m" -e
-
-##
-
-This is a good example of using args to pass shell code.
-
-spec:
-  volumes:
-    - name: logs-volume
-      emptyDir: {}
-  containers:
-    - name: main-application
-      image: busybox:latest
-      command: ["/bin/sh", "-c"]
-      args:
-        - |
-          while true; do
-            echo "$(date) - Application event occurred." >> /var/log/app/app.log
-            sleep 5
-          done
-      volumeMounts:
-        - name: logs-volume
-          mountPath: /var/log/app/
-
-##
-
-
-How to debug with crictl
-
-1. Find the container runtime endpoint.
-
-docker context ls
-
-NAME              DESCRIPTION                               DOCKER ENDPOINT                                    ERROR
-colima            colima                                    unix:///Users/fabien/.colima/default/docker.sock
-default           Current DOCKER_HOST based configuration   unix:///var/run/docker.sock
-desktop-linux *   Docker Desktop                            unix:///Users/fabien/.docker/run/docker.sock
-
-2. Configure crictl
-
-# Example for containerd
-export CONTAINER_RUNTIME_ENDPOINT=unix:///var/run/containerd/containerd.sock
-export IMAGE_SERVICE_ENDPOINT=unix:///var/run/containerd/containerd.sock
-
-# Example for containerd
-export CONTAINER_RUNTIME_ENDPOINT=unix:///Users/fabien/.docker/run/docker.sock
-export IMAGE_SERVICE_ENDPOINT=unix:///Users/fabien/.docker/run/docker.sock
-
-3. Docker ps
-
-docker ps
-CONTAINER ID   IMAGE                  COMMAND                  CREATED        STATUS       PORTS                       NAMES
-fd4141bc8034   kindest/node:v1.34.0   "/usr/local/bin/entr…"   2 months ago   Up 4 weeks                               my-kind-worker
-aa629aa1691f   kindest/node:v1.34.0   "/usr/local/bin/entr…"   2 months ago   Up 4 weeks                               my-kind-worker2
-fab136896ccd   kindest/node:v1.34.0   "/usr/local/bin/entr…"   2 months ago   Up 4 weeks   127.0.0.1:58040->6443/tcp   my-kind-control-plane
-
-4. docker exec -it
-
-docker exec -it my-kind-control-plane crictl ps -a
-
-docker exec -it my-kind-control-plane crictl
-
-crictl --help
-
-docker exec -it my-kind-control-plane crictl ps
-#OK get container id
-
-docker exec -it my-kind-control-plane crictl exec -i -t 9a471f7847c71 sh
-#OK get in the container
-
-docker exec -it my-kind-control-plane crictl logs 9a471f7847c71
-#OK get logs from the container id
-
-in the context of CKA ...
-if kubectl does not work
-if kube-apiserver or kubelet is down
-
-ssh to node or control plane 
-
-crictl info
-
-crictl ps -a
-
-crictl logs <container-id>
-
-crictl inspect <container-id>
-
-##
-
-Key Functions and Modes of kubectl debug
-The command has three main modes of operation:
-1. Ephemeral Container (Recommended for Live Debugging)
-This mode is used to inject a temporary, new container directly into an already running Pod. 
-The ephemeral container shares the Network, PID, and IPC namespaces of the existing Pod, allowing you to debug network issues, check open ports, and inspect the filesystem of the main application container without restarting or affecting it.
-When to Use: When the existing container's image (e.g., a security-hardened image) doesn't have tools like bash, netstat, or tcpdump.
-Mechanism: The new container runs a tool-rich image (like busybox or nicolaka/netshoot) alongside the application container.
-Example Command:
-kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<app-container-name>
-FlagPurpose
--it Interactive (connects to the new container's terminal).
---image Specifies the debugging image to use (e.g., nicolaka/netshoot).
---target(Optional, but recommended) Specifies the name of the container in the Pod whose processes the debug container should be able to inspect. Requires Process Namespace Sharing to be enabled on the Pod's configuration.
-2. Copy and Edit Pod (Non-Live Debugging)
-This mode creates a new copy of the original Pod with modifications, which is useful for debugging applications that are crashing immediately (i.e., in a CrashLoopBackOff state) or for isolating the issue from production traffic.
-When to Use: When you need to prevent the application from crashing (e.g., by changing the command to sleep infinity) to debug it, or when you need to enable an feature like Process Namespace Sharing that cannot be added to a running Pod.
-Mechanism: It takes the Pod's YAML specification, applies your changes, and creates a new, identically scheduled Pod.
-Example Commands:
-Copy and pause a crashing container:
-kubectl debug <pod-name> --copy-to=debug-copy-pod --container=<crashing-container-name> --command=["sleep", "infinity"]
-Copy and add a debug container with process sharing:Bashkubectl debug <pod-name> --copy-to=debug-copy-pod --image=busybox --share-processes
-3. Node Debugging
-This mode allows you to create a debug container that runs directly on the Node's host OS namespace, granting you powerful access to the node's filesystem and process tree.
-When to Use: To troubleshoot node-level issues like volumes, networking with the CNI, or problems with the Kubelet or Container Runtime.
-Mechanism: It creates a Pod that runs on the specified node and mounts the host's root filesystem (/host).
-Example Command:
-kubectl debug node/<node-name> -it --image=ubuntu
-This command creates a new Pod on the target node where the root directory (/) of the debug container is mounted to the host's root directory under /host. This allows you to inspect system files, logs, and processes on the node itself.
-
--> make a summary !!! !!! !!!
-
-############
-
-More linux tips and tricks
-
-ss -tunl
-#to see the listening ports
-
-systemctl cat kubelet
-
-systemctl show kubelet --property=ActiveState,PID,Environment
-
-# Forces systemd to re-read all unit files, essential after creating a new service
-sudo systemctl daemon-reload
-
-# Disable a service so it can never be started, even by dependencies
-sudo systemctl mask <service-name>
-
-# Re-enable the service
-sudo systemctl unmask <service-name>
-
-sysctl -a | grep net.ipv4
-sysctl net.ipv4.ip_forward
-sudo sysctl net.ipv4.ip_forward=1
-
-# Test TCP connectivity to the API Server on port 6443
-nc -v <api-server-ip> 6443
-
-# Listen on a port for testing incoming firewall rules
-nc -l -p 8080
-
-#selinux/apparmor
-sestatus
-ls -Z /etc/kubernetes/manifests/
-sudo aa-status
-
-#find which process is using a specific file
-sudo lsof | grep /path/to/mount
-
-#find open sockets
-sudo lsof -i :<port>
-
-############
-
-log locations to search api server crash !!!
-
-/var/log/pods/
-/var/log/containers/
-crictl ps + crictl logs
-docker ps + docker logs
-/var/log/syslog 
-journalctl -u kubelet
-
-tail -F /var/log/pods/*
-tail -F /var/log/containers/*
-tail -f /var/log/syslog
-
-#############
-
-We can get logs from all containers
-kubectl -n management logs --all-containers deploy/collect-data > /root/logs.log
-#OK
-
-#############
-
-Get the labels from a ns. !!! !!!
-kubectl get ns --show-labels
-kubectl get all --show-labels
-
-#############
-
-Network policies
-
-podSelector: {} #all pods
-namespaceSelector: {} #all namespaces in the cluster
-
-#Deny all
-apiVersion: networking.k8s.io/v1
-kind: NetworkPolicy
+cluster3-controlplane ~ ➜  cat service-3421-svcn.yaml 
+apiVersion: v1
+kind: Service
 metadata:
-  name: default-deny-all
-  namespace: my-app-ns
+  creationTimestamp: null
+  labels:
+    app: service-3421-svcn
+  name: service-3421-svcn
+  namespace: spectra-1267
 spec:
-  podSelector: {} # Selects ALL pods in 'my-app-ns'
-  policyTypes:
-    - Ingress
-    - Egress
-  ingress: [] # Deny all ingress
-  egress: [] # Deny all egress (unless overridden by other policies)
+  ports:
+  - name: 8080-80
+    port: 8080
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: service-3421-svcn  # delete 
+    mode: exam    # add
+    type: external  # add
+  type: ClusterIP
+status:
+  loadBalancer: {}
 
-#when combining ns selector and pod selector, the pod selector is within the ns selected
-from:
-  - namespaceSelector: # Selects the namespace
-      matchLabels:
-        name: other-namespace
-    podSelector:     # Then, selects specific pods WITHIN that selected namespace
-      matchLabels:
-        app: other-app
+##########
 
-A NetworkPolicy only applies to pods selected by its top-level spec.podSelector
+kubectl get crd <> kubectl api-resources
 
-The moment any NetworkPolicy selects a pod, all traffic to/from that pod is denied by default.
+#########
 
-A NetworkPolicy is always namespace-scoped. Always specify the namespace in the metadata section.
+When pod is OOM killed -> increase resource memory
 
-ReadWriteOnce is once for a node : read write by a sib-ngle node
+##########
 
-When creating a ClusterRole that aggregates other roles, the annotation used is rbac.authorization.k8s.io/aggregate-to-...: "true"
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: web-portal-httproute
+  namespace: cka3658
+spec:
+  parentRefs:
+    - name: nginx-gateway
+      namespace: nginx-gateway # <-
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /           # <-
+      backendRefs:
+        - name: web-portal-service-v1
+          port: 80
+          weight: 80
+        - name: web-portal-service-v2
+          port: 80
+          weight: 20
 
-The standard directory to store CA, API server and etcd certificates is /etc/kubernetes/pki.
+#############
 
+External service !!! !!! !!!
 
+SSH into the cluster3-controlplane host
+ssh cluster3-controlplane
 
+Let's check if the webserver is working or not:
+
+cluster3-controlplane  ~ ➜  curl student-node:9999
+...
+<h1>Welcome to nginx!</h1>
+...
+
+Now we will check if service is correctly defined:
+
+cluster3-controlplane  ~ ➜  kubectl describe svc -n kube-public external-webserver-cka03-svcn 
+Name:              external-webserver-cka03-svcn
+Namespace:         kube-public
+.
+.
+Endpoints:         <none> # there are no endpoints for the service
+...
+
+As we can see there is no endpoints specified for the service, hence we won't be able to get any output. Since we can not destroy any k8s object, let's create the endpoint manually for this service as shown below:
+
+First, obtain the IP address of the student node, easiest way is to ping it:
+
+root@student-node ~ ✦  ping student-node
+PING student-node (192.168.222.128) 56(84) bytes of data.
+64 bytes from student-node (192.168.222.128): icmp_seq=1 ttl=64 time=0.023 ms
+64 bytes from student-node (192.168.222.128): icmp_seq=2 ttl=64 time=0.030 ms
+
+In this example : student-node IP is 192.168.222.128
+
+Next, use the IP address to create the EndpointSlice:
+
+cluster3-controlplane  ~ ➜ kubectl  apply -f - <<EOF
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: external-webserver-cka03-svcn
+  namespace: kube-public
+  labels:
+    kubernetes.io/service-name: external-webserver-cka03-svcn
+addressType: IPv4
+ports:
+  - protocol: TCP
+    port: 9999
+endpoints:
+  - addresses:
+      - 192.168.222.128   # IP of student node
+EOF
+
+Finally check if the curl test works now:
+
+cluster3-controlplane  ~ ➜  kubectl run -n kube-public --rm  -i test-curl-pod --image=curlimages/curl --restart=Never -- curl -m 2 external-webserver-cka03-svcn
+...
+<title>Welcome to nginx!</title>
+...
 
