@@ -127,8 +127,10 @@ Pods:
 - metadata
 - spec
 
+```
 kubectl run redis --image redis123 --dry-run=client -o yaml > redis.yaml
 #OK
+```
 
 replicaset:
 - the replication controller is responsible for managing the replicas of a pod
@@ -139,6 +141,7 @@ replicaset:
     selector:
 
 Tips:
+```
 kubectl run nginx --image=nginx --dry-run=client -o yaml
 #OK
 
@@ -150,7 +153,7 @@ kubectl create deployment --image=nginx nginx --replicas=4 --dry-run=client -o y
 
 kubectl create deployment --image=httpd:2.4-alpine httpd-frontend --replicas=3 --dry-run=client -o yaml
 #OK
-
+```
 
 # Service
 - nodeport (from the service perspective)
@@ -167,6 +170,7 @@ kubectl create deployment --image=httpd:2.4-alpine httpd-frontend --replicas=3 -
 
 
 Exam tips
+```
 kubectl run --image=nginx nginx
 #OK
 
@@ -200,22 +204,25 @@ kubectl expose --help
 
 kubectl expose deployment hr-webapp --type=nodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml
 #Then vi and change the nodePort because this is not an option
-
+```
 
 Resource            Trick to Generate
-DaemonSet           Create Deployment YAML -> Change Kind -> Delete replicas
-StatefulSet         Create Deployment YAML -> Change Kind -> Add serviceName
-Ingress             kubectl create ingress ... (It exists!)
-CronJobkubectl      create cronjob ...
-Service (NodePort)  kubectl expose deploy ... --type=NodePort --dry-run=client -o yaml
-PVC / NetPol        No generator. Use kubectl explain or copy existing.
+- DaemonSet           Create Deployment YAML -> Change Kind -> Delete replicas
+- StatefulSet         Create Deployment YAML -> Change Kind -> Add serviceName
+- Ingress             kubectl create ingress ... (It exists!)
+- CronJob             kubectl create cronjob ...
+- Service (NodePort)  kubectl expose deploy ... --type=NodePort --dry-run=client -o yaml
+- PVC / NetPol        No generator. Use kubectl explain or copy existing.
 
 
 Imperative commands
+```
 kubectl run httpd --image=httpd:alpine --port=80 --expose
 service/httpd created
 pod/httpd created
 #OK
+```
+
 
 Labels and selectors
 kubectl get pods --selector app=app1
@@ -230,6 +237,7 @@ Imaginez un taint (une souillure 🤢) comme un panneau "🚫 Interdit aux non-a
 Ce panneau est là pour empêcher les pods ordinaires de s'exécuter sur ce nœud. 
 
 Tmux
+```
 tmux ls
 tmux attach -t
 Ctrl-B % vertical split
@@ -238,7 +246,10 @@ Ctrl-B o move to the next pane
 Ctrl-B x exit
 Ctrl-B d detach
 #OK
+```
 
+More exam tips
+```
 kubectl node explain --recursive 
 #OKOKOK 
 
@@ -268,6 +279,7 @@ DuringExecution => existing pods
 
 kubectl create deployment my-dep --image=nginx --replicas=3
 #OK 
+```
 
 Resources and limits
 Best choice is request but no limits
@@ -287,8 +299,10 @@ Staticpodpath or kubeconfig
 Docker ps or crictl ps
 Static pods for the control plane components they are ignored by kubescheduler
 Chicken and egg problem: This allows the essential control plane services to start up before the API server is fully operational, solving the bootstrapping challenge.
+```
 kubectl run --restart=Never --image=busybox static-busybox --dry-run=client -o yaml --command -- sleep 1000 > /etc/kubernetes/manifests/static-busybox.yaml
 #OK
+```
 
 Priority classes
 Not used
@@ -297,8 +311,9 @@ Kube-system from 2 000 000 000
 globalDefault: true
 preemptionPolicy: PreemptLowerPriority #by default
 
-
+```
 kubectl get pods -o custom-columns="NAME:.metadata.name,PRIORITY:.spec.priorityClassName"
+```
 
 Note remove priority when adding priorityClassName !!!
 
@@ -310,14 +325,17 @@ KubeSchedulerConfiguration
 Scheduler as a pod
 --config=/etc/kubernetes/xxx.yaml
 
+```yaml
 leaderElection:
   leaderElect: true
+```
 
 In the pod ...
   schedulerName: xxx
-
+```
 kubectl get events -o wide
 kubectl logs xxx ...
+```
 
 Search for multiple kube scheduler
 
@@ -345,11 +363,13 @@ Admission controllers
 - ...
 
 Which admission control plugins are enabled ?
+```
 kube-apiserver -h | grep enable-admission-plugins
 kubectl exec kube-api-server-controlplane -n kube-system -- kube-apiserver -h | grep enable-admission-plugins
 grep enable-admission-plugins /etc/kubernetes/manifests/kube-apiserver.yaml
 ps -ef | grep kube-apiserver | grep admission-plugins !!!
 #OK
+```
 
 ###
 Validating and mutating admission controllers
@@ -371,7 +391,9 @@ Kubelet use cAdvisor
 Metric server is external and should be installed
 Kubctl top node/pod
 
+```
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+```
 
 Custom metrics
 - within the cluster
@@ -385,15 +407,18 @@ External metrics
 ###
 Application logs
 
+```
 kubectl logs -f xxx
 kubectl logs -f pod-name container-name 
-
+```
 
 ###
 Deployment updates and rollback
 
+```
 kubectl rollout status deploy/xxxx
 kubectl rollout history deploy/xxxx
+```
 
 2 deploy strategy
 - Recreate
@@ -408,46 +433,49 @@ kubectl set image deployments/frontend simple-webapp=kodekloud/webapp-color:v2
 ###
 Application commands
 
+```
 FROM Ubuntu
 
 ENTRYPOINT ["sleep"]
 
 CMD ["5"]
-
+```
 
 ###
 Commands and arguments
 
-Spec:
+```yaml
+spec:
   Containers:
     - name: ubuntu-sleeper
       Image: ubuntu-sleeper
       Args: ["10"] #-> CMD
       Command: ["sleep2.0"] #-> ENTRYPOINT
-
+```
 !!! !!! !!!
 
 ###
 Configure Env Var
 
-Env:
+```
+env:
   - name: APP_COLOR
     Value: pink
 
-Env:
+env:
   - name: APP_COLOR
     ValueFrom:
       configMapKeyRef:
         Name: XXX
         Key: xxxx
 
-Env:
+env:
   - name: APP_COLOR
     ValueFrom:
       secretKeyRef: xxxx
         Name: XXX
         Key: xxxx
-
+```
 
 ###
 ConfigMaps
@@ -461,19 +489,21 @@ So 3 possibilites
 - Volume
 
 In pod with CM ...
+```yaml
 spec:
   container:
     - name:
       envFrom:
         - configMapRef:
             name: xxxx
-
+```
 In pod with volumes ...
+```yaml
 volumes:
 - name:
       configMap:
         name: xxx
-
+```
 ####
 Secrets
 
@@ -485,11 +515,12 @@ From doc Tasks / Configure pods and containers
 - Single env
 - Volume
 
+```yaml
 envFrom: 
   - secretRef:
     name: app-config
 
-Env:
+env:
   - name: DB_PASSWORD
     valueFrom:
       secretKeyRef:
@@ -500,12 +531,13 @@ volumes:
 - name: app-secret-volume
     secret:
       secretName: xxxx
-
+```
 ###
 Encrypting Secret Data At Rest
 
 https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
 
+```
 apt-get install etcd-client
 
 ETCDCTL_API=3 etcdctl \
@@ -518,9 +550,9 @@ ETCDCTL_API=3 etcdctl \
 ps -aux | grep kube-api | grep "encryption-provider-config"
 
 vi /etc/kubernetes/manifests/kube-api-server.yaml
-
+```
 Create the EncryptionConfiguration file with aescbc provider ...
-
+```
 head -c 32 /dev/urandom | base64
 
 Adding to kubeapi-server ...
@@ -528,7 +560,7 @@ Adding to kubeapi-server ...
 Restart kubeapi-server
 crictl pods 
 #OK
-
+```
 ###
 Multi-container pods
 
@@ -549,14 +581,17 @@ Co-located containers
 #
 Regular init-container
 
+```yaml
 initContainers:
   - name: 
      image:
      command:
+```
 
 #
 Sidecar container #is an init container but stay alive
 
+```yaml
 containers:
 
 initContainers:
@@ -564,7 +599,7 @@ initContainers:
      image:
      command:
      restartPolicy: Always #-> sidecar
-
+```
 https://learn.kodekloud.com/user/courses/cka-certification-course-certified-kubernetes-administrator/module/2ddcf79b-abb0-4aeb-ad0c-3d54c7b4fc64/lesson/27822812-d758-428d-91db-942db6800ab1 !!!
 
 ###
@@ -610,19 +645,21 @@ VPA best for stateful workload, CPU/memory heavy apps (db, MLs)
 HPA is best for web apps, MS, stateless
 
 VPA restarts pods until in place update
-
+```
 kubectl apply -f /root/vpa-crds.yml
 kubectl apply -f /root/vpa-rbac.yml
 
-  git clone https://github.com/kubernetes/autoscaler.git
-   cd autoscaler/vertical-pod-autoscaler
-
+git clone https://github.com/kubernetes/autoscaler.git
+cd autoscaler/vertical-pod-autoscaler
+```
 ###
 OS Upgrades
 
+```
 kubectl drain node-1 --ignore-daemonsets
 kubectl cordon node-1
 kubectl uncordon node-1
+```
 
 ###
 Kubernetes releases
