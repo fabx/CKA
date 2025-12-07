@@ -602,21 +602,21 @@ initContainers:
 ```
 https://learn.kodekloud.com/user/courses/cka-certification-course-certified-kubernetes-administrator/module/2ddcf79b-abb0-4aeb-ad0c-3d54c7b4fc64/lesson/27822812-d758-428d-91db-942db6800ab1 !!!
 
-###
+##
 Intro to autoscaling
 
 - Cluster auto scaler (node)
 - HPA
 - VPA
 
-###
+##
 HPA
 
 kubectl scale can be used to scale deployments and statefullsets
 
 Missing resource metrics -> because of missing resource requirements at the pod ??? 
 
-###
+##
 VPA 
 
 FEATURE_GATES=InPlacePodVerticalScaling=true
@@ -652,7 +652,7 @@ kubectl apply -f /root/vpa-rbac.yml
 git clone https://github.com/kubernetes/autoscaler.git
 cd autoscaler/vertical-pod-autoscaler
 ```
-###
+##
 OS Upgrades
 
 ```
@@ -661,12 +661,12 @@ kubectl cordon node-1
 kubectl uncordon node-1
 ```
 
-###
+##
 Kubernetes releases
 
 Major.minor.patch
 
-###
+##
 Cluster upgrade
 
 Kube-apiserver
@@ -687,6 +687,8 @@ We need to upgrade one minor at a time.
 
 First upgrade the master then the nodes.
 
+##
+
 kubeadm upgrade plan
 
 kubeadm does not upgrade kubelet
@@ -694,22 +696,27 @@ kubeadm does not upgrade kubelet
 You must upgrade kubeadm itself before to upgrade the cluster.
 
 1. Master
+```
 apt-get upgrade -y kubeadm=1.x.x-00
 apt-get upgrade -y kubelet=1.12.0-00 #if running on master
 kubeadm upgrade apply v1.12.0
 kubectl get nodes #provide the kubelet versions not the master
 systemctl restart kubelet
+```
 
 2. Workers
+```
 kubectl drain node01
 apt-get upgrade -y kubeadm=1.12.0-00
 apt-get upgrade -y kubelet=1.12.0-00
 kubeadm upgrade node config --kubelet-version v1.12.0
 systemctl restart kubelet
 kubectl uncordon node01
+````
 
 https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
 
+```
 vi /etc/apt/sources.list.d/kubernetes.list
 
 deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /
@@ -737,12 +744,12 @@ systemctl daemon-reload
 
 systemctl restart kubelet
 #OK 
-
+```
 For node same but ...
-
+```
 kubeadm upgrade node
 #OK
-
+```
 ###
 Backup and restore
 
@@ -752,7 +759,7 @@ PV
 Velero or Ark for backups
 
 Data-dir from etc
-
+```
 etcdctl snapshot save
 etcdctl snapshot restore
 
@@ -760,17 +767,17 @@ Kube api-server stop
 etcdctl restore
 -> new data dir created
 
-Systemctl daemon-reoad
+systemctl daemon-reoad
 service etcd restart
-
-###
+```
+##
 Working with etcdctl and etcdutl
 #NOT DOING THIS !!! !!! !!!
 
-###
+##
 Kubernetes security primitives
 
-###
+##
 Authentication
 
 - Static password file
@@ -778,24 +785,24 @@ Authentication
 - Certificates
 - Identity services (LDAP)
 
-###
+##
 TLS introduction
 
-###
+##
 TLS Basics
 
-We use asymmetric key to exchange a symmetric key.
-The symmetric key is used to encrypt the traffic.
-On the server there is a public asymmetric and private symmetric key.
+- We use asymmetric key to exchange a symmetric key.
+- The symmetric key is used to encrypt the traffic.
+- On the server there is a public asymmetric and private symmetric key.
 
-The server public key is associated with a certificate ensuring the validity of the server.
-The certificate is issued by a certificate authority, and not self signed.
-The browser will trust the certificate.
-The CAs use public private keys to sign their certificates.
-The public keys of the CAs are builtin the browser.
-The public keys of your Public Key Infrastructure can also been stored into your browser.
+- The server public key is associated with a certificate ensuring the validity of the server.
+- The certificate is issued by a certificate authority, and not self signed.
+- The browser will trust the certificate.
+- The CAs use public private keys to sign their certificates.
+- The public keys of the CAs are builtin the browser.
+- The public keys of your Public Key Infrastructure can also been stored into your browser.
 
-You can get a certificate by sending a CSR to a CA.
+- You can get a certificate by sending a CSR to a CA.
 
 A certificate is a public (assymmetric) key. In facts it includes:
 - a public key
@@ -813,7 +820,7 @@ TLS kubernetes
 There are client (certificate and private key) and server (certificate and private key) certificates and there is a certificate (certificate and private key) authority.
 
 
-###
+##
 Certificate details.
 
 Openssl tool.
@@ -821,29 +828,39 @@ Openssl tool.
 Memotechnique: GENRSA(key) - REQ(csr) - X509(crt)
 
 1. CA.
+```
 openssl genrsa -out ca.key 2048
 -> ca.key
-
+```
+```
 openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr
 -> ca.csr
-
+````
+```
 openssl x509 -req -in ca.csr -signkey ca.key -out ca.crt
 -> ca.crt
+````
 
 2. Client certificates : Admin user
+```
 openssl genrsa -out admin.key 2048
 -> admin.key
-
+```
+```
 openssl req -new -key admin.key -subj "/CN=kube-admin/O=system:masters" -out admin.csr
 -> admin.csr
-
+```
+```
 openssl x509 -req -in admin.csr -CA ca.crt -CAkey ca.key -out admin.crt
 -> admin.crt
+```
 
 3. Server certificates
+```
 openssl genrsa -out apiserver.key 2048
 -> apiserver.key
-
+```
+```
 openssl req -new -key apiserver.key -subj "/CN=kube-apiserver" -out apiserver.csr -config openssl.cnf
 
 openssl.cnf
@@ -853,31 +870,33 @@ DNS.2 = kubernetes.default
 DNS.3 = kubernetes.default.svc
 DNS.4 = kubernetes.default.svc.cluster.local
 -> apiserver.csr
-
-Openssl x509 -req -in apiserver.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver.crt -extensions v3_req -extfile openssl.cnf -day 1000
+```
+```
+openssl x509 -req -in apiserver.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out apiserver.crt -extensions v3_req -extfile openssl.cnf -day 1000
 -> apiserver.crt
-
-###
+```
+##
 View certificate details
-
+```
 cat /etc/kubernetes/manifests/kube-apiserver.yaml
 
 openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
-
+```
 https://github.com/mmumshad/kubernetes-the-hard-way/tree/master/tools
 
 Certificates requirements
 https://kubernetes.io/docs/setup/best-practices/certificates/
 
+```
 cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep crt
 openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
 #OK
-
+```
 
 Use of openssl
 
 The typical openssl usage is genrsa - req - x509
-
+```
 openssl genrsa -out ca.key 2048
 -> ca.key
 
@@ -886,32 +905,34 @@ openssl req -new -key ca.key -subj "/CN=KUBERNETES-CA" -out ca.csr
 
 openssl x509 -req -in ca.csr -signkey ca.key -out ca.crt
 -> ca.crt
+````
 
 Check certificate validity
-
+```
 openssl x509 -in certificate.crt -noout -text
 
 openssl s_client -connect google.com:443 2>/dev/null | openssl x509 -noout -text
+```
+##
 
-#######
-
-
+```
 crictl ps
 
 crictl logs 1234567
 #OK
-
-###
+```
+##
 Certificates API
 
 https://kubernetes.io/docs/tasks/tls/certificate-issue-client-csr/
-
+```
 openssl req -in sample.csr -noout -text
 
 cat akshay.csr | base64 -w 0
 
 vi Akshay.csr
-
+```
+```yaml
 ---
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
@@ -924,24 +945,24 @@ spec:
   signerName: kubernetes.io/kube-apiserver-client
   usages:
   - client auth
-
-###
+```
+##
 Kubeconfig
-
+```
 kubectl config view
 kubectl config use-context prod-user@production
 
 kubectl config --kubeconfig=/root/my-kube-config use-context research
 
 export KUBECONFIG=/root/my-kube-config
-
-###
+```
+##
 API Groups
-
+```
 Kubectl proxy #is not kube proxy
 curl http://localhost:8001 -k
-
-###
+```
+##
 Authorization
 
 - Node #kubelet with certificate
@@ -961,19 +982,21 @@ Open policy agent.
 
 Authorization-mode=Nodde,RBAC,Webhook #when denied pass to the next module
 
-###
+##
 RBAC
 
+```
 kubectl auth can-i create deployments
 kubectl auth can-i delete pods
 kubectl auth can-i create deployments --as dev-user
 kubectl auth can-i delete pods --as dev-user
-
+```
 The role can be used to specify
 - Resources
 - Namespaces
 - ResourceNames
 
+```yaml
 kind: Role
 Metadata:
   Name: developer
@@ -982,14 +1005,15 @@ Rules:
       Resources: ["pods"]
       Verbs: ["get", "create", "update"]
       resourceNames: ["blue", "orange"]
-
+```
+```
 kubectl create role developer --verb list --verb create --verb delete --resource pods
 role.rbac.authorization.k8s.io/developer created
 
 kubectl create rolebinding dev-user-binding --role developer --user dev-user
 rolebinding.rbac.authorization.k8s.io/dev-user-binding created
-
-
+```
+```yaml
 kind: Role
 metadata:
   creationTimestamp: "2025-08-28T06:54:34Z"
@@ -1015,35 +1039,32 @@ rules:
   - deployments
   verbs:
   - create
+```
 
-###
-Namespace
-kubectl api-resources --namespaced=true
-
-###
+##
 Cluster role
-
+```
 kubectl create clusterrole access-node --verb "*" --resource nodes
 kubectl create clusterrolebinding access-node-michelle --user michelle --clusterrole access-node 
 
 kubectl create clusterrole storage-admin --resource persistentvolumes,storageclasses --verb "*" 
 kubectl create clusterrolebinding michelle-storage-admin --user michelle --clusterrole storage-admin 
-
-###
+```
+##
 Service Accounts
 
-Every service account should have a token associated with it.
-The token can be used to access the kube api server.
-Every namespace has a default service account.
-Every pod in a namespace can get the token of the default service account from the token request api.
+- Every service account should have a token associated with it.
+- The token can be used to access the kube api server.
+- Every namespace has a default service account.
+- Every pod in a namespace can get the token of the default service account from the token request api.
 
-The changes from the token request api happened in 1.22 and 1.24.
-
+- The changes from the token request api happened in 1.22 and 1.24.
+```
 kubectl exec -it web-dashboard-5f88cdc488-lwdzr -- sh
 
 kubectl create token dashboard-sa
-
-###
+```
+##
 Image Security
 
 Image: docker.io/library/nginx
@@ -1052,29 +1073,32 @@ Image: <registry>/<user/account>/<image/repository>
 
 
 For private repository
+```
 kubectl create secret docker-registry regard --docker-server my.io --docker-username my --docker-password my --docker-email my@org.io
-
+```
 Inside pod ...
+```yaml
 imagePullSecrets:
-- Name: regcred
-
-###
+- ame: regcred
+```
+##
 Docker security
 
-###
+##
 Security Context
 
 - Linux capabilities
 - User id
 
+```yaml
 securityContext:
   runAsUser: 10000
   Capabilities:
     Add: ["MAC_ADMIN"]
-
-###
+```
+##
 Network Policies
-
+```yaml
 policyTypes:
 - Ingress
 - Egress
@@ -1100,12 +1124,12 @@ Egress:
     Ports:
     - protocol: TCP
       port: 80
-
+```
     
 Flannel does not support Network Policies
 
 policyTypes:
-
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -1142,12 +1166,12 @@ spec:
       protocol: UDP
     - port: 53
       protocol: TCP
-
-###
+```
+##
 Custom resource definition
 
 flightticket.yaml
-
+```yaml
 apiVersion: flights.com/v1
 kind: FlightTicket
 metadata:
@@ -1156,9 +1180,9 @@ spec:
   from: Mumbai
   to: London
   number: 2
-
+```
 flightticket-custom-definition.yaml
-
+```yaml
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata: 
@@ -1189,10 +1213,10 @@ spec:
                   type: string
                 number:
                   type: string
-
+```
 https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
 
-
+```yaml
 kind: Global
 apiVersion: traffic.controller/v1
 metadata:
@@ -1200,18 +1224,18 @@ metadata:
 spec:
   dataField: 2
   access: true
-
-###
+```
+##
 Custom Controllers
 
 https://github.com/kubernetes/sample-controller
 
-###
+##
 Operator Framework
 
 https://operatorhub.io/
 
-###
+##
 Docker storage
 
 /var/lib/docker/volumes
@@ -1236,18 +1260,18 @@ Storage drivers
 - Overlay
 - Overlay 2
 
-###
+##
 Volume driver plugins in docker
-
+```
 docker run -it --name mysql --volume-driver rexray/ebs --mount src=ebs-vol,target=/var/lib/mysql mysql
-
-###
+```
+##
 Container storage interface
 
-###
+##
 Volumes
 
-###
+##
 Persistent Volumes
 
 PV (admin)
@@ -1257,7 +1281,7 @@ Access mode
 - ReadOnlyMany
 - ReadWriteOnce
 - ReadWriteMany
-
+```yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -1271,15 +1295,16 @@ spec:
    awsElasticBlockStore:
       volumeID: xxx
       fsType: ext4
-
-###
+```
+##
 PersitentVolumeClaims
 
 One to one relation between PVC and PV !!!
 
+```yaml
 apiVersion: v1
-Kind PersitentVolumeClaim
-Metadata:
+kind PersitentVolumeClaim
+metadata:
   Name: myclaim
 spec:
   accessModes:
@@ -1287,36 +1312,38 @@ spec:
   Resources:
     Requests: 
       Storage: 500Mi 
-
+```
 persistemtVolumeReclaimPolicy: #what happens to the volume when the pvc is deleted 
   - Retain #not deleted but not available, usefull to protect data !!!
   - Delete
   - Recycle #deprecated replaced by delete
  
 
- ###
+##
 Storage class
 
 Dynamic provisioning.
 
 You define a provisioner that will automatically provision storage and attach to pods when the claim is made.
 
+```yaml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: google-storage
 provisioner: kubernetes.io/gce-pd
-
+```
 
 PV will be created automatically.
 We specify the SC in the PVC.
 
-###
+##
 Linux networking basics
 
-###
+##
 DNS
 
+```
 /etc/hosts
 
 /etc/resolv.conf
@@ -1330,13 +1357,13 @@ A web-server x.x.x.x
 CNAME food.webserver eat.server
 
 nslookup or dig #do not consider host file
+```
 
-
-###
+##
 Network namespaces
 
 #to RELISTEN BEST GLOBAL NETWORK EXPLANATION !!! !!! !!!
-
+```
 ip netns add red
 ip netns add blue
 
@@ -1346,22 +1373,23 @@ ip link
 
 ip nets exec red ip link #execute ip link inside the ns red
 
-With a network ns we prevent the container to see the host interfaces.
-This is the same with arp tables ...
+#With a network ns we prevent the container to see the host interfaces.
+#This is the same with arp tables ...
 
 ip nets exec red arp 
 
-We may use open vSwitch to connect ns.
-
-###
+#We may use open vSwitch to connect ns.
+```
+##
 Docker networking
 
 - None
 - Host
 - Bridge : internal private network 
 
+```
 docker network ls
-
+```
 docker0 on the host is the bridge
 
 Container = network namespace
@@ -1379,16 +1407,17 @@ Docker port mapping is done with iptables native.
 7. Bring the interfaces up
 8. Enable NAT - IP masquerade
 
-###
+##
 CNI
 
 Docker does not implement CNI but CNM.
 
-###
+##
 Networking cluster node.
 
 Commands to use ... !!! !!! !!!
 
+```
 ip link
 ip addr
 ip addr add 192.168.1.10/24 dev eth0
@@ -1400,47 +1429,47 @@ arp
 netstat -pnlt
 netstat -anp
 netstat -anp | grep etcd | grep 2380 | wc -l
-
-###
+```
+##
 Pod networking
 
 ??? TO RE READ IF NEEDED ???
 
-###
+##
 CNI in kubernetes
 
-###
+##
 CNI Weave
-
+```
 ls -al /opt/cni/bin
 cat /etc/cni/net.d/10-flannel.conflist 
-
-###
+```
+##
 IPAN CNI
-
+```
 rm /etc/cni/net.d/10-flannel.conflist
-
+```
 
 https://docs.tigera.io/calico/latest/getting-started/kubernetes/quickstart
-
+```
 kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/tigera-operator.yaml
 
 curl https://raw.githubusercontent.com/projectcalico/calico/v3.29.3/manifests/custom-resources.yaml -O
 
-Modify cidr range
+#modify cidr range
 
 kubectl apply -f custom-resources.yaml 
 
 watch kubectl get pods -A
-
-###
+```
+##
 Service networking
 
 Is implemented through iptables and NAT rules on the nodes by kube-proxy.
 The service is so translated into ip node and port.
 The service is available across all nodes in a virtual way.
 
-
+```
 ps auxf | grep controller
 
 Pod range:
@@ -1448,25 +1477,27 @@ Pod range:
 
 Service range:
 --service-cluster-ip-range=172.20.0.0/16
-
-###
+```
+##
 Cluster DNS
 
 For service
+```
 curl http://web-service
 curl http://web-service.apps
 curl http://web-service.apps.svc
 curl http://web-service.apps.svc.cluster.local
 curl http://<service>.<namespace>.svc.cluster.local
-
+```
 For pods disable by default in Corefile
+```
 curl http://10-244-2-5
 curl http://10-244-2-5.apps
 curl http://10-244-2-5.apps.pod
 curl http://10-244-2-5.apps.pod.cluster.local
 curl http://<IP>.<namespace>.pod.cluster.local
-
-###
+```
+##
 CoreDNS in kubernetes
 
 From 1.20 kubeDNS -> CoreDNS
@@ -1484,11 +1515,11 @@ The service is kube-dns by default.
 forward: A global rule for all external DNS queries.
 stubDomains: A specific rule for a particular domain.
 
-###
+##
 Ingress
-
+```
 kubectl create ingress --help
-
+```
 apiVersion: networking.k8s.io/v1
 
 
@@ -1503,14 +1534,14 @@ Gateway is an implementation of GatewayClass.
 
 GatewayClass <- Gateway <- HttpRoute
 
-
+```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: nginx
 spec:
   controllerName: nginx.org/gateway-controller
-
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -1525,7 +1556,7 @@ spec:
     allowedRoutes:
       namespaces:
         from: All
-
+---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -1542,18 +1573,18 @@ spec:
     backendRefs:
     - name: my-app
       port: 80
-
-
+```
+```
 kubectl kustomize "https://github.com/nginx/nginx-gateway-fabric/config/crd/gateway-api/standard?ref=v1.5.1" | kubectl apply -f -
 kubectl apply -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v1.6.1/deploy/crds.yaml
 kubectl apply -f https://raw.githubusercontent.com/nginx/nginx-gateway-fabric/v1.6.1/deploy/nodeport/deploy.yaml
 kubectl get pods -n nginx-gateway
 kubectl get svc -n nginx-gateway nginx-gateway -o yaml
-
-###
+```
+##
 
 A gateway can accept routes from all namespaces
-
+```yaml
 # Create the Gateway
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
@@ -1569,8 +1600,8 @@ spec:
     allowedRoutes: # -> !!!
       namespaces:
         from: All
-
-###
+```
+##
 
 Migrate from ingress to gateway
 
@@ -1579,7 +1610,7 @@ Migrate from ingress to gateway
 Nginx, contour, Istio, ...
 
 2. Create the gateway resource
-
+```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
@@ -1591,9 +1622,9 @@ spec:
     protocol: HTTP
     port: 80
     hostname: "example.com"
-
+```
 3. Create the HttpRoute
-
+```yaml
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -1611,9 +1642,9 @@ spec:
     backendRefs:
     - name: my-service
       port: 80
-
-###
-
+```
+##
+```
 kubectl create -n default -f - <<EOF
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -1637,26 +1668,26 @@ spec:
           port: 80
           weight: 20
 EOF
-
-###
+```
+##
 Design a Kubernetes cluster
 
-###
+##
 Choosing kubernetes infrastructure
  
-###
+##
 Configure HA
 
-###
+##
 ETCD in HA
 
-###
+##
 Introduction to deployment
 
-###
+##
 KUBEADM
 Cluster installation
-
+```
 sudo apt-mark unhold kubeadm && \
 sudo apt-get update && sudo apt-get install -y kubeadm='1.33.0-1.1' && \
 sudo apt-mark hold kubeadm
@@ -1667,25 +1698,25 @@ sudo apt-mark hold kubelet kubectl
 
 systemctl daemon-reload
 systemctl restart kubelet
+```
 
-
-#######
+##
 
 Install a Debian package
-
+```
 dpkg -i ...
 
 systemctl start cri-docker
 systemctl enable cri-docker
+```
 
-
-###
+##
 What is helm
 
-###
+##
 Installation and configuration of helm
 
-###
+##
 A quick note about Helm 2
 
 3 way strategic merge patch
@@ -1693,7 +1724,7 @@ A quick note about Helm 2
 - Current release 
 - Live state
 
-###
+##
 Helm components
 
 - Helm cli
@@ -1712,14 +1743,14 @@ Helm repositories
 Artifacthub.io
 6311 packages
 
-###
+##
 Helm charts
-
+```
 helm install <release> <repo/chart>
 
 values.yaml
 Chart.yaml
-
+```
 apiVersion:
 Helm 2 v1
 Helm 3 v2
@@ -1731,9 +1762,9 @@ Types:
 Dependencies
 -> so need to add the dependency helm ...
 
-###
+##
 Working with helm
-
+```
 helm search hub repo
 
 helm list #list the releases
@@ -1741,46 +1772,46 @@ helm uninstall <release>
 
 helm repo list 
 helm repo update #refresh the repo locally
-
-###
+```
+##
 Customize chart parameters
-
+```
 helm install --values custom-values.yaml my-release bitnami/wordpress
 
 helm pull bitnami/wordpress #creates a directory
 #modify in the directory ./wordpress
 helm install my-release ./wordpress
-
-###
+```
+##
 Helm lifecycle management
-
+```
 helm history nginx-release
 helm rollback nginx-release 1 #creates revision 1 ??? 3
-
+```
 You may need to use charts hooks if you need to upgrade something that is external to kubernetes.
-
+```
 helm upgrade dazzling-web bitnami/nginx --version 18.3.6
+```
 
-
-###
+##
 
 Helm install w/o CRDs 
 
 It will skip the installation of the CRDs contained in the crds/ folder.
 You can do it by using --skip-crds
 
-###
-
+##
+```
 helm ls -A
 helm repo ls
 helm search repo kk-mock1/nginx
 helm upgrade kk-mock1 kk-mock1/nginx -n kk-ns --version=18.1.15
+```
 
-
-###
+##
 
 Use of helm template
-
+```yaml
 {{ .Values.myValue | quote }}: Wraps the value in quotes.
 {{ .Values.myValue | upper }}: Converts text to UPPERCASE.
 {{ .Values.myValue | default "blue" }}: Uses "blue" if myValue is missing.
@@ -1792,7 +1823,7 @@ envVars:
   - name: DB_HOST
     value: localhost
 
--> 
+#-> 
 
 #in templates/deployment.yaml
 env:
@@ -1800,8 +1831,8 @@ env:
   - name: {{ .name }}
     value: {{ .value | quote }}
   {{- end }}
-
-###
+```
+##
 Kustomize problem statement
 
 - Base
@@ -1826,13 +1857,13 @@ k8s/
 
 You may need to update kustomize to get the latest.
 
-###
+##
 Kustomize vs Helm
 
-###
+##
 Install kustomize
 
-###
+##
 kustomization.yaml
 
 resources:
@@ -1844,36 +1875,39 @@ commonLabels:
 
 kustomize build k8s/ #outputs to terminal does not apply
 
-###
+##
 Kustomize output
-
+```
 kustomize build k8s/ | kubectl apply -f -
-Or ...
+#or
 kubectl apply -k k8s/
 
 kustomize build k8s/ | kubectl delete -f -
-Or ...
+#or
 kubectl delete -k k8s/
+```
 
-
-###
+##
 Managing directories
 
 k8s/kustomization.yaml
+
+```yaml
 ---
 resources:
   - api/
   - db/
   - cache/
   - kafka/
-
+```
 k8s/db/kustomization.yaml
+```yaml
 ---
 resources:
   - db-depl.yaml
   - db-service.yaml
-
-###
+```
+##
 Common Transformers
 
 - commonLabel
@@ -1886,6 +1920,7 @@ Common Transformers
 Image transformers
 
 kustomization.yaml
+```yaml
 ---
 images:
   - name: nginx
@@ -1903,11 +1938,11 @@ images:
 
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-
+```
 https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/
 
 
-###
+##
 Patch intro
 
 Types
@@ -1928,6 +1963,7 @@ Value
 ## Json 6902 patch
 
 kustomization.yaml
+```yaml
 ---
 patches:
   - target:
@@ -1942,11 +1978,12 @@ patches:
       - op: replace
         path: /spec/replicas
         value: 5
-
+```
 
 ## Strategic merge patch
 
 kustomization.yaml
+```yaml
 ---
 patches:
   - patch: |-
@@ -1956,21 +1993,22 @@ patches:
         name: api-deployment
       spec:
         replicas: 5
-
-###
+```
+##
 Different types of patches
 
-###
+##
 Patches dictionary
 
 #TODO get the dictionary in yaml ??? YES TODO
 
-###
+##
 Patches list
 
 Replace Json6902 
 
 kustomization.yaml
+```yaml
 ---
 patches:
   - target:
@@ -1982,10 +2020,11 @@ patches:
         value:
           name: haproxy
           image: haproxy
-
+```
 Replace Strategic merge patch
 
 kustomization.yaml
+```yaml
 --- 
 patches:
   - label-patch.yaml
@@ -2002,10 +2041,12 @@ spec:
       containers:
         - name: nginx
           image: haporxy
-
+```
+##
 Add Json6902
 
 kustomization.yaml
+```yaml
 ---
 patches:
   - target:
@@ -2017,10 +2058,12 @@ patches:
         value:
           name: haproxy
           image: haproxy
+```
 
 Add strategic merge patch
 
 kustomization.yaml
+```yaml
 --- 
 patches:
   - label-patch.yaml
@@ -2037,10 +2080,13 @@ spec:
       containers:
         - name: haproxy
           image: haporxy
+```
+
 
 Delete list Json6902
 
 kustomization.yaml
+```yaml
 ---
 patches:
   - target:
@@ -2052,10 +2098,12 @@ patches:
         value:
           name: haproxy
           image: haproxy
+```
 
 Delete list strategic merge patch
 
 kustomization.yaml
+```yaml
 --- 
 patches:
   - label-patch.yaml
@@ -2072,13 +2120,15 @@ spec:
       containers:
         - $patch: delete
           name: haproxy
+````
           
-###
+##
 Overlays
 
-###
+##
 Components
 
+```
 k8s/
 |- base/
 |  |- kustomizayion.yaml
@@ -2099,8 +2149,10 @@ k8s/
    |  |- kustomization.yaml
    |- standalone/
    |  |- kustomization.yaml
+```
 
 Components/db/kustomization.yaml
+```yaml
 ---
 apiVersion: kustomize.config.k8s.io/v1alpha1
 kind: component
@@ -2112,46 +2164,33 @@ secretGenerator:
       - password=postgress123
 patches:
   - deployment-patch.yaml
-
+```
 
 Overlay/dev/kustomization.yaml
+```yaml
 ---
 bases:
   - ../../base
 components:
   - ../../components/db
+```
 
+##
 
-###
-
+```
 kubectl expose deployment hr-webapp --type=nodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml
 #Then vi and change the nodePort
-
-
-
-# PB
-
-kubectl apply -f /root/code/project_mercury/overlays/community/
-error: error validating "/root/code/project_mercury/overlays/community/kustomization.yaml": error validating data: [apiVersion not set, kind not set]; if you choose to ignore these errors, turn validation off with --validate=false
-
+```
 
 
 kubectl apply -k "https://github.com/kubernetes-sigs/kustomize/releases/latest/download/kustomize-crds.yaml"
 
 
-
-
-spec/template/spec/containers/redis/env/
-
-kubectl apply -k /root/code/project_mercury/overlays/enterprise/
-# Warning: 'bases' is deprecated. Please use 'resources' instead. Run 'kustomize edit fix' to update your Kustomization automatically.
-error: accumulating components: accumulateDirectory: "recursed accumulation of path '/root/code/project_mercury/components/caching': no resource matches strategic merge patch \"Deployment.v1.app/api-deployment.[noNs]\": no matches for Id Deployment.v1.app/api-deployment.[noNs]; failed to find unique target for patch Deployment.v1.app/api-deployment.[noNs]"
-
-
-
-###
+##
 Json path
 
+
+```json
 $[0]
 
 $[0,3]
@@ -2185,16 +2224,16 @@ $[0:8:2] #by step
 $[-1] #the last
 $[-1:0] #the last
 $[-3:] #the 3 last elements
-
+```
  
-###
+##
 Json Path for kubernetes
-
+```
 kubectl get pods -o=jsonpath'{ .items[0].spec.containers[0].image }'
-
+```
 - No need for $, added by kubectl
 - Command must be included in '{ }'
-
+```
 kubectl get nodes -o=jsonpath='{.items[*].metadata.name}'
 kubectl get nodes -o=jsonpath='{.items[*].status.nodeInfo.architecture}'
 kubectl get nodes -o=jsonpath='{.items[*].status.capacity.cpu}'
@@ -2218,17 +2257,14 @@ kubectl get pv --sort-by=.spec.capacity.storage -o=custom-columns=NAME:.metadata
 
 kubectl config view --kubeconfig /root/my-kube-config -o=jsonpath='{.contexts[0].name}' > /opt/outputs/aws-context-name
 
+```
 
+##
+##
 
-########
+**EXAM TIPS AND TRICKS**
 
-
-EXAM TIPS AND TRICKS
-EXAM TIPS AND TRICKS
-EXAM TIPS AND TRICKS
-EXAM TIPS AND TRICKS
-
-####
+##
 
 tips for searching the documentation
 
@@ -2240,8 +2276,9 @@ tips for searching the documentation
 6. Concepts / Workloads / Workload management
 
 
-####
+##
 
+```
 kubectl api-resources
 # get all kubernetes resources
 
@@ -2265,13 +2302,14 @@ spec:
   # add your specifications here
 
 #OK
-
+```
+```
 #ensure kubectl completion is enabled in kubectl quick reference ...
 
 source <(kubectl completion bash) # set up autocomplete in bash into the current shell, bash-completion package should be installed first.
 echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permanently to your bash shell.
-
-###
+```
+##
 
 
 crictl 
@@ -2280,26 +2318,29 @@ can be installed by apt on the node or by downloading the binary from github
 
 https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/
 
-crictl pods	    Lists all the pod sandboxes on the node.	                                                crictl pods
-crictl ps	      Lists all containers, and you can add -a to show all containers, including stopped ones.	crictl ps -a
-crictl images	  Lists all images available on the node.	                                                  crictl images
-crictl pull	    Pulls an image from a container registry.	                                                crictl pull nginx:latest
-crictl logs	    Fetches the logs of a specific container.	                                                crictl logs <container-id>
-crictl exec	    Runs a command inside a running container.	                                              crictl exec -it <container-id> sh
-crictl inspectp	Displays detailed status information for one or more pods.	                              crictl inspectp <pod-id>
-crictl inspect	Displays detailed status information for one or more containers.	                        crictl inspect <container-id>
+- crictl pods	    Lists all the pod sandboxes on the node.	                                                crictl pods
+- crictl ps	      Lists all containers, and you can add -a to show all containers, including stopped ones.	crictl ps -a
+- crictl images	  Lists all images available on the node.	                                                  crictl images
+- crictl pull	    Pulls an image from a container registry.	                                                crictl pull nginx:latest
+- crictl logs	    Fetches the logs of a specific container.	                                                crictl logs <container-id>
+- crictl exec	    Runs a command inside a running container.	                                              crictl exec -it <container-id> sh
+- crictl inspectp	Displays detailed status information for one or more pods.	                              crictl inspectp <pod-id>
+- crictl inspect	Displays detailed status information for one or more containers.	                        crictl inspect <container-id>
 
-########
+##
 
 Call the kubernetes API using a secret mounted in a pod
 
 1. Create a service account
 2. Create a role
+```yaml
 rules:
 - apiGroups: [""]
   resources: ["pods/log"]
   verbs: ["get", "watch", "list"]
+```
 3. Create a RoleBinding between the service account and the role
+```yaml
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -2313,9 +2354,9 @@ roleRef:
   kind: Role
   name: my-pod-reader-role
   apiGroup: rbac.authorization.k8s.io
+```
 
-x
-########
+##
 
 New last tips and tricks
 
@@ -2332,15 +2373,15 @@ CM and Secrets
 Kubernetes automatically updates a Pod's mounted `ConfigMap` volume with a slight delay (typically on the order of a minute) after the `ConfigMap` resource is updated. This allows the application to read the new configuration without a Pod restart.
 
 Updating a Kubernetes Secret has different effects depending on how the secret is used by a pod.
-## Secret Mounted as a Volume (wait 2 minues)
+#### Secret Mounted as a Volume (wait 2 minues)
 When a secret is mounted as a volume in a pod, changes to the secret are automatically updated in the pod's file system.
 This update is not instantaneous; it can take up to a minute or two for the changes to propagate. You won't need to restart the pod for it to see the new secret data.
 The pod will be able to read the new files from the mounted directory.
-## Secret Used as an Environment Variable (reload needed)
+#### Secret Used as an Environment Variable (reload needed)
 When a secret is used to set an environment variable, updating the secret does not automatically update the environment variable inside the running pod
 The environment variables are set only when the pod is created. To get the new secret value, you must restart or recreate the pod.
 This is because environment variables are static and are not re-evaluated after the pod has started.
-## Secret Used from a Secret Key Reference (reload needed)
+#### Secret Used from a Secret Key Reference (reload needed)
 Similar to environment variables, a secret referenced via secretKeyRef in a pod's spec to provide a single value for a field is not automatically updated.
 The value is fetched when the pod is created, and it remains static for the pod's lifetime.
 To get the new secret value, you must restart or recreate the pod.
@@ -2417,6 +2458,7 @@ A custom `Seccomp` profile is a JSON file that defines a specific set of allowed
 
 Multicontainer
 
+```yaml
 apiVersion: v1
 kind: Pod
 metadata:
@@ -2452,22 +2494,25 @@ spec:
   volumes:
     - name: shared-volume
       emptyDir: {}      #shared not persistent
+````
 
 ##
 
 Install cri docker
 
+```
 dpkg -i /root/cri-docker_0.3.16.3-0.debian.deb
 systemctl start cri-docker
 systemctl enable cri-docker
 systemctl is-active cri-docker
 systemctl is-enabled cri-docker
 systemctl daemon-reload #may be needed
+```
 
 ##
 
 Install with kubeadm
-
+```
 vim /etc/apt/sources.list.d/kubernetes.list #master and node
 
 deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.33/deb/ /
@@ -2520,6 +2565,7 @@ kubectl get pods -o wide | grep gold # make sure this is scheduled on a node
 
 export ETCDCTL_API=3
 etcdctl snapshot save --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kubernetes/pki/etcd/server.crt --key=/etc/kubernetes/pki/etcd/server.key --endpoints=127.0.0.1:2379 /opt/etcd-backup.db
+```
 
 ##
 
@@ -2528,12 +2574,15 @@ Volumes
 The `Retain` policy ensures the underlying storage is not deleted. The PV object transitions to a `Released` state, requiring an administrator to manually clean it up before it can be reused.
 The data remains on the volume.
 
+##
+
 Rollinupdate
 
 Updating the container image tag in the pod template is the standard trigger for a rolling update, causing Kubernetes to create new pods with the new image.
 
 During a `RollingUpdate`, for a time, pods from both the old and new ReplicaSets are running simultaneously, thus consuming more resources than `Recreate`, which terminates old pods before creating new ones.
 
+##
 
 Etcdctl
 
@@ -2559,10 +2608,10 @@ This will create a copy of my-pod but replace the container's image with busybox
 
 The kubelet is a client of the API server and, like `kubectl`, uses a kubeconfig file (often located at `/etc/kubernetes/kubelet.conf`) to find the server's endpoint and credentials.
 
-#########
+##
 
 VPA !!! !!! !!!
-
+```
 kubectl create -n default -f - <<EOF
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
@@ -2577,9 +2626,9 @@ spec:
   updatePolicy:
     updateMode: "Auto"
 EOF
-
+```
 or ...
-
+```
 kubectl explain vpa
 GROUP:      autoscaling.k8s.io
 KIND:       VerticalPodAutoscaler
@@ -2591,12 +2640,13 @@ kind: VerticalPodAutoscaler
 metadata: 
   name: vpa
   namespace: default
+```
 
-
-############
+##
 
 5
 create a user, csr, role, ...
+```yaml
 ---
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
@@ -2609,7 +2659,9 @@ spec:
   - digital signature
   - key encipherment
   - client auth
+```
 
+```
 kubectl certificate approve john-developer
 
 kubectl create role developer --resource=pods --verb=create,list,get,update,delete --namespace=development
@@ -2617,7 +2669,7 @@ kubectl create role developer --resource=pods --verb=create,list,get,update,dele
 kubectl create rolebinding developer-role-binding --role=developer --user=john --namespace=development
 
 kubectl auth can-i update pods --as=john --namespace=development
-
+```
 ##
 
 Give access alice to kubernetes cluster
@@ -2626,22 +2678,22 @@ https://kubernetes.io/docs/tasks/tls/certificate-issue-client-csr/
 KEYWORDS client csr
 
 1. Create key.
-
+```
 openssl genrsa -out alice.key 2048
 #OK
-
+```
 2. Generate alice csr.
-
+```
 openssl req -new -key alice.key -out alice.csr -subj "/CN=alice/O=devs"
 #OK
-
+```
 3. Encode the csr.
-
+```
 CSR_BASE64=$(cat alice.csr | base64 -i -)
 #OK
-
+```
 4. Create the csr.
-
+```
 cat <<EOF | kubectl apply -f -
 apiVersion: certificates.k8s.io/v1
 kind: CertificateSigningRequest
@@ -2656,49 +2708,49 @@ spec:
   expirationSeconds: 31536000
 EOF
 #OK
-
+```
 5. Approve the request.
-
+```
 kubectl certificate approve alice
 #OK
-
+```
 6. Get the certificate.
-
+```
 kubectl get csr alice -o jsonpath='{.status.certificate}' | base64 -o alice.crt -d -i -
 #OK
-
+```
 7. Create the role
-
+```
 kubectl create role pod-reader --verb=get,list,watch --resource=pods -n default
 #OK
-
+```
 8. Create the binding 
-
+```
 kubectl create rolebinding devs-pod-reader-binding --role=pod-reader --group=devs -n default
 #OK
-
+```
 9. Set credentials =~ create user alice
-
+```
 kubectl config set-credentials alice --client-certificate=alice.crt --client-key=alice.key --embed-certs=true
 #OK
-
+```
 10. Set context
-
+```
 kubectl config set-context alice-context --cluster=kind-my-kind --user=alice
 #OK
-
+```
 11. Test
-
+```
 kubectl --context=alice-context get pods -n default
 #OKOKOK
-
+```
 ##
 
 DNS resolver
 
 https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
 KEYWORDS nslookup pod
-
+```
 kubectl run nginx-resolver --image=nginx
 #OK
 
@@ -2714,11 +2766,11 @@ kubectl get pod nginx-resolver -o wide
 kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup 192-168-116-198.default.pod
 #OK
 
-
+```
 ##
 
 create use john
-
+```
 openssl genrsa -out john.key 2048
 
 openssl req -new -key john.key -out john.csr -subj "/CN=myuser/O=devs"
@@ -2746,12 +2798,12 @@ kubectl get csr john -o jsonpath='{.status.certificate}'| base64 -d > john.crt
 kubectl config set-credentials john --client-key=john.key --client-certificate=john.crt --embed-certs=true
 
 kubectl create role developer --verb=create --verb=get --verb=list --verb=update --verb=delete --resource=pods
-
+```
 
 ##
 
 Kubernetes debug and investigation tips and tricks.
-
+```
 kubectl get events --sort-by=.metadata.creationTimestamp
 #OK in kubectl cheat sheet
 
@@ -2795,7 +2847,7 @@ kubectl auth can-i <verb> <resource> --as=<user/sa-name>
 #If a container fails due to permissions
 kubectl describe pod <pod-name> #and check for SecurityContext : runAsUser, fsGroup, seLinuxOptions, readOnlyRootFilesystem, allowPrivilegeEscalation, ...
 #OK
-
+```
 
 Follow the Logs and Events Chain: Never just look at the Pod status. If it's Pending, check the Events. If it's CrashLoopBackOff, check the Logs. If the logs are silent, check the describe output's events again for probe failures or mounting issues.
 
@@ -2804,7 +2856,7 @@ Use Descriptive Labels: Good labeling is essential for isolating and debugging. 
 Isolate the Failing Pod: If you suspect a specific Pod is causing issues, temporarily remove its selector label with kubectl label pod <pod-name> app=debug-broken --overwrite. This detaches it from the Service, allowing you to debug it live without affecting user traffic.
 
 The "Ephemeral Container" Trick (v1.25+): Use kubectl debug to inject a temporary "ephemeral container" (e.g., a busybox or netshoot image with debugging tools) into an existing running Pod's namespace. This lets you debug a running Pod without restarting it, especially useful for networking problems.
-
+```
 #If static pod failure
 ssh <node-name>
 cat /etc/kubernetes/manifests/<pod-name>.yaml
@@ -2819,45 +2871,57 @@ journalctl -u kubelet
 #If pod is failing due to permissions
 use securityContext at the Pod and Container levels to set runAsUser, runAsGroup, or fsGroup
 #OK
+```
+##
 
-# UPGRADE KUBERNETES CLUSTER WITH KUBEADM
+#### UPGRADE KUBERNETES CLUSTER WITH KUBEADM
 
 I. Plan -> Control Plane (Master)
+```
 kubeadm upgrade plan
 #Checks cluster health, finds recommended versions, and confirms you're ready.
+```
 
 II. Install kubeadm -> Control Plane
+```
 sudo apt install kubeadm=<version>
 #Must be done first. Upgrade the tool itself to the target version.
-
+```
 III. Apply Control Plane -> Control Plane
+```
 sudo kubeadm upgrade apply v<version>
 #Downloads new control plane images (API server, etcd, etc.) and updates their static Pod manifests.
-
+```
 IV. Install Kubelet/kubectl -> Control Plane
+```
 sudo apt install kubelet=<version> kubectl=<version>
 #Upgrade the remaining binaries. This is a separate, manual step!
-
+```
 V. Restart Kubelet -> Control Plane
+```
 sudo systemctl daemon-reload && sudo systemctl restart kubelet
 #Reloads the service to pick up the new binary version.
-
+```
 VI. Repeat -> Additional Control Plane Nodes
+```
 #If it's an HA cluster, repeat the process on the remaining control plane nodes.
-
+```
 VII. Worker Node Upgrade -> Worker Node
+```
 sudo kubeadm upgrade node
 #On each worker node, runs the necessary config updates.
-
+```
 VIII. Install Kubelet/kubectl -> Worker Node
+```
 sudo apt install kubelet=<version> kubectl=<version>
 #Upgrade the binaries on the worker node.
-
+```
 IX. Restart Kubelet -> Worker Node
+```
 sudo systemctl daemon-reload && sudo systemctl restart kubelet
 #Restart the service on the worker node.
-
-
+```
+```
 kubectl drain <node-name>       #-> Control Plane (Master)  Cordon (mark unschedulable) and safely evict all non-DaemonSet Pods from the node. Always use --ignore-daemonsets.
 kubectl uncordon <node-name>    #-> Control Plane (Master)  Mark the node back as schedulable after the upgrade is complete.
 
@@ -2888,8 +2952,11 @@ curl --insecure https://localhost:6443 from master node
 kubectl run netshoot-debug --image=nicolaka/netshoot -it --rm --restart=Never -- bash
 
 kubectl run test-client --image=busybox --restart=Never --rm -it -- wget -O- x.x.x.x:80
+```
 
-###
+##
+
+#### Debug Kubernetes
 
 Debugging Kubernetes is a structured process that moves from observing high-level status down to inspecting application code and low-level cluster components. 
 The best tips focus on a systematic drill-down using native kubectl commands before resorting to more complex tools.
@@ -2968,6 +3035,7 @@ By following these steps, you can quickly and efficiently isolate whether an iss
 
 ip forwarding
 
+```
 persist ip_forwarding in systemd
 
 sysctl net.ipv4.ip_forward
@@ -2977,17 +3045,17 @@ vi /etc/systemd/k8s.conf
 sudo sysctl -p /etc/sysctl.d/k8s.conf
 
 sysctl net.ipv4.ip_forward
-
+```
 
 ##
 
-
-
+```
 dpkg -i cri-dockerd_0.3.16.3-0.ubuntu-jammy_amd64.deb
 sudo systemctl enable --now cri-docker.service
 vi /etc/sysctl.d/k8s.conf #create the config file
 net.ipv4.ip_forward=1 #with ...
 sysctl -p #apply
+```
 
 ##
 
