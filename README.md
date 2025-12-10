@@ -236,6 +236,25 @@ To let a pod run on a specific node, we will use affinity.
 Imaginez un taint (une souillure 🤢) comme un panneau "🚫 Interdit aux non-autorisés" sur un nœud de votre cluster Kubernetes.
 Ce panneau est là pour empêcher les pods ordinaires de s'exécuter sur ce nœud. 
 
+The toleration could match the key with the operator exists or compare the key to a value with an operator.
+
+```yaml
+tolerations:
+- key: "node.kubernetes.io/unreachable"
+  operator: "Exists"
+  effect: "NoExecute"
+  tolerationSeconds: 6000
+```
+
+```yaml
+tolerations:
+- key: "key1"
+  operator: "Equal"
+  value: "value1"
+  effect: "NoExecute"
+  tolerationSeconds: 3600
+```
+
 Tmux
 ```
 tmux ls
@@ -316,6 +335,9 @@ kubectl get pods -o custom-columns="NAME:.metadata.name,PRIORITY:.spec.priorityC
 ```
 
 Note remove priority when adding priorityClassName !!!
+
+There are two high priority classes by default: system-cluster-critical and system-node-critical.
+By default a pod get a priority of 0.
 
 ### 
 Multiple scheduler
@@ -403,6 +425,12 @@ Custom metrics
 External metrics
 - from outside the cluster or the application
 - the number of messages in a pub/sub queue
+
+Monitor memory and cpu consumed by containers.
+```
+kubectl top pods <pod-name> --containers --sort-by=memory
+```
+
 
 ###
 Application logs
@@ -770,7 +798,52 @@ etcdctl restore
 systemctl daemon-reoad
 service etcd restart
 ```
+
+Check certificates expiration with kubeadm
+```
+kubeadm certs renew apiserver
+kubeadm certs check-expiration
+```
+
+Join the node
+
+```
+kubectl get node # only the controlplane node available
+
+kubeadm token create --print-join-command
+
+ssh node01
+    # execute command printed out by command above
+    kubeadm join 172.30.1.2:6443 --token ...
+    exit
+
+kubectl get node # should show the node
+```
+
+Upgrade components of the cluster to next version.
+
+```
+# see possible versions
+kubeadm upgrade plan
+
+# show available versions
+apt-cache show kubeadm # -> good to see available versions
+
+# can be different for you
+apt-get install kubeadm=1.34.1-1.1
+
+# could be a different version for you, it can also take a bit to finish!
+kubeadm upgrade apply v1.34.1
+
+# can be a different version for you
+apt-get install kubectl=1.34.1-1.1 kubelet=1.34.1-1.1
+
+service kubelet restart
+```
+
+
 ##
+
 Working with etcdctl and etcdutl
 #NOT DOING THIS !!! !!! !!!
 
@@ -946,6 +1019,7 @@ spec:
   usages:
   - client auth
 ```
+
 ##
 Kubeconfig
 ```
@@ -1063,6 +1137,12 @@ Service Accounts
 kubectl exec -it web-dashboard-5f88cdc488-lwdzr -- sh
 
 kubectl create token dashboard-sa
+```
+
+Disable automountServiceAccountToken is a best security practice.
+
+```yaml
+automountServiceAccountToken: false
 ```
 ##
 Image Security
@@ -1832,6 +1912,22 @@ env:
     value: {{ .value | quote }}
   {{- end }}
 ```
+
+##
+
+Some helm commands.
+
+```
+helm repo add nginx-stable https://helm.nginx.com/stable
+helm search repo nginx # serach chart nginx !!! 
+helm show chart nginx-stable/nginx-ingress
+helm show values nginx-stable/nginx-ingress
+helm get manifest my-nginx-ingress -n nginx-ingress
+helm history my-nginx-ingress -n nginx-ingress
+helm rollback my-nginx-ingress 3 -n nginx-ingress
+
+```
+
 ##
 Kustomize problem statement
 
@@ -3177,6 +3273,19 @@ journalctl
 journalctl -b #for the current boot
 journalctl -u docker.service
 
+Get a list of all services associated with kubernetes.
+```
+systemctl list-unit-files --type service --all
+systemctl list-unit-files --type service --all | grep kube
+```
+
+##
+
+Check the readiness status of the kubernetes api server.
+
+```
+kubectl get --raw='/readyz?verbose' 
+```
 
 ##
 
@@ -3461,6 +3570,60 @@ When creating a ClusterRole that aggregates other roles, the annotation used is 
 
 The standard directory to store CA, API server and etcd certificates is /etc/kubernetes/pki.
 
+##
+
+Install containerd
+```
+sudo mkdir -p /usr/local/containerd
+sudo tar Cxzvf /usr/local https://github.com/containerd/containerd/releases/download/v2.0.4/containerd-2.0.4-linux-amd64.tar.gz
+sudo ln -sf /usr/local/bin/containerd /usr/local/sbin/containerd
+
+cat <<'EOF_UNIT' | sudo tee /etc/systemd/system/containerd.service
+> [Unit]
+> Description=containerd container runtime
+> Documentation=https://containerd.io
+> After=network.target
+> 
+> [Service]
+> ExecStart=/usr/local/bin/containerd
+> Restart=always
+> RestartSec=5
+> RuntimeDirectory=containerd
+> Delegate=yes
+> KillMode=process
+> OOMScoreAdjust=-999
+> 
+> [Install]
+> WantedBy=multi-user.target
+> EOF_UNIT
+[Unit]
+Description=containerd container runtime
+Documentation=https://containerd.io
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/containerd
+Restart=always
+RestartSec=5
+RuntimeDirectory=containerd
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-999
+
+[Install]
+WantedBy=multi-user.target
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now containerd
+```
 
 
 
+
+
+
+
+
+apt-mark unhold kubelet kubectl && \
+apt-get update && apt-get install -y kubelet='1.34.2-1' && \
+apt-mark hold kubelet kubectl
