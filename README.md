@@ -227,7 +227,7 @@ pod/httpd created
 Labels and selectors
 kubectl get pods --selector app=app1
 
-Taints - Toleration
+|Taints - Toleration
 NoSchedule
 PreferNoSchedule
 NoExecute #only new pods will be placed on the node and running pods w/o the tolerance are ejected
@@ -2287,9 +2287,9 @@ Json path
 
 
 ```json
-$[0]
+$[0] #the first element of the root array
 
-$[0,3]
+$[0,3] #the first and the fourth elements of the root array
 
 # [ for an array
 # . for the dictionary
@@ -2314,8 +2314,8 @@ $.*.wheels[*].model
 cat q9.json | jpath '$.prizes[*].laureates[*]'
 cat q9.json | jpath '$.prizes[*].laureates[?(@.id==913)]'
 
-$[0:3]
-$[0,3]
+$[0:3] #the first faout elements
+$[0,3] #the first and the fourth
 $[0:8:2] #by step
 $[-1] #the last
 $[-1:0] #the last
@@ -2414,13 +2414,20 @@ can be installed by apt on the node or by downloading the binary from github
 
 https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/
 
-- crictl pods	    Lists all the pod sandboxes on the node.	                                                crictl pods
+- crictl pods	    Lists all the pod sandboxes on the node.	                  
+                              crictl pods
 - crictl ps	      Lists all containers, and you can add -a to show all containers, including stopped ones.	crictl ps -a
+
 - crictl images	  Lists all images available on the node.	                                                  crictl images
+
 - crictl pull	    Pulls an image from a container registry.	                                                crictl pull nginx:latest
+
 - crictl logs	    Fetches the logs of a specific container.	                                                crictl logs <container-id>
+
 - crictl exec	    Runs a command inside a running container.	                                              crictl exec -it <container-id> sh
+
 - crictl inspectp	Displays detailed status information for one or more pods.	                              crictl inspectp <pod-id>
+
 - crictl inspect	Displays detailed status information for one or more containers.	                        crictl inspect <container-id>
 
 ##
@@ -2505,8 +2512,11 @@ where each replica needs its own storage. The PVCs and their associated Persiste
 ##
 
 ReadWriteOnce     (RWO)   #once by node
+
 ReadWriteOncePod  (RWOP)  #once by pod
+
 ReadWriteMany     (RWX)
+
 ReadOnlyMany      (ROX)
 
 
@@ -2535,6 +2545,7 @@ Docker-shim was a component within the Kubernetes kubelet that acted as an adapt
 kubelet -> docker-shim -> Docker Daemon -> containerd -> runc
 
 hostIPC: true
+
 By sharing the host's IPC namespace, a container can potentially send signals to or read shared memory from other processes on the host, which is a significant security risk.
 
 Linux capabilities are a security mechanism that breaks up the all-powerful root privilege into smaller, distinct units.
@@ -2548,7 +2559,16 @@ Mounting a volume to the `/var/log` directory is a common pattern to allow a con
 
 A custom `Seccomp` profile is a JSON file that defines a specific set of allowed syscalls, which is a common practice in the CKS exam.
 
+##
 
+valueFrom
+
+valueFrom is used to set the value of an env var.
+It could be: 
+- secretKeyRef: from a secret
+- configMapKeyRef: from a CM
+- fieldRef: from the pod itself
+- resourceFieldRef: from the container's resource
 
 ##
 
@@ -2687,20 +2707,29 @@ etcdctl snapshot restore
 
 To restore the snapshot to a new `etcd` instance, you must have the same TLS certificates and keys that were used to secure the original cluster.
 
-
+##
 
 The `endpointslice-controller`, which runs inside the `kube-controller-manager`, is responsible for creating and managing `EndpointSlices` based on the pods that match a service's selector.
 
+##
+
 The API server is configured with a Certificate Authority (CA). Any client certificate signed by this CA is considered authentic.
+
+##
 
 This command correctly uses the `--copy-to` flag to create a new pod named `my-pod-debug` as a copy of the original and attaches an interactive terminal.
 kubectl debug my-pod -it --copy-to=my-pod-debug --image=busybox -- /bin/sh
 This will create a copy of my-pod but replace the container's image with busybox, which is a lightweight image that includes common debugging tools.
 
+##
+
 `kubeadm` enables automatic certificate renewal for control plane components as part of the `kubeadm upgrade` process. Running this command manually is an alternative but not the automatic mechanism.
 
+##
 
 `NetworkPolicy` resources are just objects in the API server; a CNI plugin like Calico, Cilium, or Weave Net is required to actually implement and enforce the firewall rules they define.
+
+##
 
 The kubelet is a client of the API server and, like `kubectl`, uses a kubeconfig file (often located at `/etc/kubernetes/kubelet.conf`) to find the server's endpoint and credentials.
 
@@ -2825,7 +2854,7 @@ kubectl create role pod-reader --verb=get,list,watch --resource=pods -n default
 kubectl create rolebinding devs-pod-reader-binding --role=pod-reader --group=devs -n default
 #OK
 ```
-9. Set credentials =~ create user alice
+9. Set credentials =~ create user alice !!!
 ```
 kubectl config set-credentials alice --client-certificate=alice.crt --client-key=alice.key --embed-certs=true
 #OK
@@ -3088,7 +3117,7 @@ Tip: Check the Reason under Last State: Terminated for crashed containers.
 
 B. Common Pod Failures
 Status                Cause                                             Fix Tip
-Pending               Scheduler can't place the Pod.                    Check kubectl describe pod events: Is there enough CPU/Memory on nodes? Are there Taints/Tolerations or Node Selectors preventing placement?
+Pending               Scheduler can't place the Pod.                    Check kubectl describe pod events: Is there enough CPU/Memory on nodes? Are there |Taints/Tolerations or Node Selectors preventing placement?
 ImagePullBackOff      Can't pull the container image.                   Check the image name/tag for typos, verify image exists, and ensure imagePullSecrets are configured correctly for private registries.
 CrashLoopBackOffThe   application starts and then crashes repeatedly.   The best tip here is to check the previous logs. See section 3.
 
@@ -3293,32 +3322,38 @@ Investigation Summary
 
 CLUSTER - NODES
 
+```
 kubectl get componentstatuses
 kubectl get nodes
 kubectl get events --sort-by=.metadata.creationTimestamp
+```
 
 PODS
 
+```
 kubectl get pods
 kubectl describe pods|desploy|svc|...
+```
 
 Tip: Check the Events section at the bottom for messages like FailedScheduling, FailedAttachVolume, or OOMKilled (Exit Code 137).
 Tip: Check the Reason under Last State: Terminated for crashed containers.
 
-Status                Cause                                             Fix Tip
-Pending               Scheduler can't place the Pod.                    Check kubectl describe pod events: Is there enough CPU/Memory on nodes? Are there Taints/Tolerations or Node Selectors preventing placement?
-ImagePullBackOff      Can't pull the container image.                   Check the image name/tag for typos, verify image exists, and ensure imagePullSecrets are configured correctly for private registries.
-CrashLoopBackOffThe   application starts and then crashes repeatedly.   The best tip here is to check the previous logs. See section 3.
+| Status               | Cause                                            | Fix Tip |
+| Pending              | Scheduler can't place the Pod.                   | Check kubectl describe pod events: Is there enough CPU/Memory on nodes? Are there Taints/Tolerations or Node Selectors preventing placement? |
+| ImagePullBackOff     | Can't pull the container image.                  | Check the image name/tag for typos, verify image exists, and ensure imagePullSecrets are configured correctly for private registries. |
+| CrashLoopBackOffThe  | application starts and then crashes repeatedly.  | The best tip here is to check the previous logs. See section 3. |
 
 CONTAINER
 
+```
 kubectl logs <pod-name>
 
 kubectl exec -it <pod-name> -c <container-name> -- /bin/bash # or /bin/sh
 kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<container-name>
-
+```
 NETWORK
 
+```
 kubectl get np
 kubectl get all --show-labels or kubectl 
 kubectl get endpoints <service-name> -n <namespace>
@@ -3329,9 +3364,11 @@ kubectl describe ingress|gateway
 kubectl run -it --rm debug --image=busybox --restart=Never -- sh
 # Inside the pod:
 wget <service-name>:<port>
+````
 
 ADVANCED
 
+```
 kubectl top pod
 kubectl top nodes
 kubectl apply -f <file.yaml> --dry-run=client 
@@ -3341,11 +3378,13 @@ sudo systemctl status containerd
 # On the affected node (via SSH):
 sudo systemctl status kubelet
 sudo journalctl -u kubelet --since "5m" -e
+```
 
 ##
 
 This is a good example of using args to pass shell code.
 
+```yaml
 spec:
   volumes:
     - name: logs-volume
@@ -3363,6 +3402,7 @@ spec:
       volumeMounts:
         - name: logs-volume
           mountPath: /var/log/app/
+```
 
 ##
 
@@ -3373,13 +3413,13 @@ How to debug with crictl
 
 docker context ls
 
-NAME              DESCRIPTION                               DOCKER ENDPOINT                                    ERROR
-colima            colima                                    unix:///Users/fabien/.colima/default/docker.sock
-default           Current DOCKER_HOST based configuration   unix:///var/run/docker.sock
-desktop-linux *   Docker Desktop                            unix:///Users/fabien/.docker/run/docker.sock
+| NAME              | DESCRIPTION                              | DOCKER ENDPOINT |                                  
+| colima            | colima                                   | unix:///Users/fabien/.colima/default/docker.sock |
+| default           | Current DOCKER_HOST based configuration  | unix:///var/run/docker.sock |
+| desktop-linux *   | Docker Desktop                           | unix:///Users/fabien/.docker/run/docker.sock |
 
 2. Configure crictl
-
+```
 # Example for containerd
 export CONTAINER_RUNTIME_ENDPOINT=unix:///var/run/containerd/containerd.sock
 export IMAGE_SERVICE_ENDPOINT=unix:///var/run/containerd/containerd.sock
@@ -3387,17 +3427,17 @@ export IMAGE_SERVICE_ENDPOINT=unix:///var/run/containerd/containerd.sock
 # Example for containerd
 export CONTAINER_RUNTIME_ENDPOINT=unix:///Users/fabien/.docker/run/docker.sock
 export IMAGE_SERVICE_ENDPOINT=unix:///Users/fabien/.docker/run/docker.sock
-
+```
 3. Docker ps
-
+```
 docker ps
 CONTAINER ID   IMAGE                  COMMAND                  CREATED        STATUS       PORTS                       NAMES
 fd4141bc8034   kindest/node:v1.34.0   "/usr/local/bin/entr…"   2 months ago   Up 4 weeks                               my-kind-worker
 aa629aa1691f   kindest/node:v1.34.0   "/usr/local/bin/entr…"   2 months ago   Up 4 weeks                               my-kind-worker2
 fab136896ccd   kindest/node:v1.34.0   "/usr/local/bin/entr…"   2 months ago   Up 4 weeks   127.0.0.1:58040->6443/tcp   my-kind-control-plane
-
+```
 4. docker exec -it
-
+```
 docker exec -it my-kind-control-plane crictl ps -a
 
 docker exec -it my-kind-control-plane crictl
@@ -3413,9 +3453,9 @@ docker exec -it my-kind-control-plane crictl exec -i -t 9a471f7847c71 sh
 docker exec -it my-kind-control-plane crictl logs 9a471f7847c71
 #OK get logs from the container id
 
-in the context of CKA ...
-if kubectl does not work
-if kube-apiserver or kubelet is down
+#in the context of CKA ...
+#if kubectl does not work
+#if kube-apiserver or kubelet is down
 
 ssh to node or control plane 
 
@@ -3426,44 +3466,55 @@ crictl ps -a
 crictl logs <container-id>
 
 crictl inspect <container-id>
-
+```
 ##
 
 Key Functions and Modes of kubectl debug
+
 The command has three main modes of operation:
+
 1. Ephemeral Container (Recommended for Live Debugging)
 This mode is used to inject a temporary, new container directly into an already running Pod. 
 The ephemeral container shares the Network, PID, and IPC namespaces of the existing Pod, allowing you to debug network issues, check open ports, and inspect the filesystem of the main application container without restarting or affecting it.
 When to Use: When the existing container's image (e.g., a security-hardened image) doesn't have tools like bash, netstat, or tcpdump.
 Mechanism: The new container runs a tool-rich image (like busybox or nicolaka/netshoot) alongside the application container.
 Example Command:
+```
 kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<app-container-name>
-FlagPurpose
--it Interactive (connects to the new container's terminal).
---image Specifies the debugging image to use (e.g., nicolaka/netshoot).
---target(Optional, but recommended) Specifies the name of the container in the Pod whose processes the debug container should be able to inspect. Requires Process Namespace Sharing to be enabled on the Pod's configuration.
+#FlagPurpose
+#-it Interactive (connects to the new container's terminal).
+#--image Specifies the debugging image to use (e.g., nicolaka/netshoot).
+#--target(Optional, but recommended) Specifies the name of the container in the Pod whose processes the debug container should be able to inspect. Requires 
+```
+Process Namespace Sharing to be enabled on the Pod's configuration.
+
 2. Copy and Edit Pod (Non-Live Debugging)
 This mode creates a new copy of the original Pod with modifications, which is useful for debugging applications that are crashing immediately (i.e., in a CrashLoopBackOff state) or for isolating the issue from production traffic.
 When to Use: When you need to prevent the application from crashing (e.g., by changing the command to sleep infinity) to debug it, or when you need to enable an feature like Process Namespace Sharing that cannot be added to a running Pod.
 Mechanism: It takes the Pod's YAML specification, applies your changes, and creates a new, identically scheduled Pod.
 Example Commands:
+```
 Copy and pause a crashing container:
 kubectl debug <pod-name> --copy-to=debug-copy-pod --container=<crashing-container-name> --command=["sleep", "infinity"]
+```
 Copy and add a debug container with process sharing:Bashkubectl debug <pod-name> --copy-to=debug-copy-pod --image=busybox --share-processes
+
 3. Node Debugging
 This mode allows you to create a debug container that runs directly on the Node's host OS namespace, granting you powerful access to the node's filesystem and process tree.
 When to Use: To troubleshoot node-level issues like volumes, networking with the CNI, or problems with the Kubelet or Container Runtime.
 Mechanism: It creates a Pod that runs on the specified node and mounts the host's root filesystem (/host).
 Example Command:
+```
 kubectl debug node/<node-name> -it --image=ubuntu
+```
 This command creates a new Pod on the target node where the root directory (/) of the debug container is mounted to the host's root directory under /host. This allows you to inspect system files, logs, and processes on the node itself.
 
 -> make a summary !!! !!! !!!
 
-############
+##
 
 More linux tips and tricks
-
+```
 ss -tunl
 #to see the listening ports
 
@@ -3500,11 +3551,12 @@ sudo lsof | grep /path/to/mount
 
 #find open sockets
 sudo lsof -i :<port>
+```
 
-############
+##
 
 log locations to search api server crash !!!
-
+```
 /var/log/pods/
 /var/log/containers/
 crictl ps + crictl logs
@@ -3515,23 +3567,27 @@ journalctl -u kubelet
 tail -F /var/log/pods/*
 tail -F /var/log/containers/*
 tail -f /var/log/syslog
-
-#############
+```
+##
 
 We can get logs from all containers
+```
 kubectl -n management logs --all-containers deploy/collect-data > /root/logs.log
+```
 #OK
 
-#############
+##
 
 Get the labels from a ns. !!! !!!
+```
 kubectl get ns --show-labels
 kubectl get all --show-labels
-
-#############
+```
+##
 
 Network policies
 
+```yaml
 podSelector: {} #all pods
 namespaceSelector: {} #all namespaces in the cluster
 
@@ -3557,16 +3613,18 @@ from:
     podSelector:     # Then, selects specific pods WITHIN that selected namespace
       matchLabels:
         app: other-app
-
+```
 A NetworkPolicy only applies to pods selected by its top-level spec.podSelector
 
 The moment any NetworkPolicy selects a pod, all traffic to/from that pod is denied by default.
 
 A NetworkPolicy is always namespace-scoped. Always specify the namespace in the metadata section.
 
-ReadWriteOnce is once for a node : read write by a sib-ngle node
+##
 
 When creating a ClusterRole that aggregates other roles, the annotation used is rbac.authorization.k8s.io/aggregate-to-...: "true"
+
+##
 
 The standard directory to store CA, API server and etcd certificates is /etc/kubernetes/pki.
 
@@ -3617,18 +3675,9 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now containerd
 ```
 
+##
 
-
-
-
-
-
-
-apt-mark unhold kubelet kubectl && \
-apt-get update && apt-get install -y kubelet='1.34.2-1' && \
-apt-mark hold kubelet kubectl
-
-Tips and tricks on kubernetes investigation.
+Tips and tricks on kubernetes service investigation.
 
 Endpoints: kubectl get endpoints <service-name>. If this is empty, your Service labels don't match your Pod labels.
 kubectl get pods, svc -l xxx
@@ -3640,33 +3689,34 @@ Investigating kube-api access issues
 CAN-I ?
 
 1. netcat
+```
 nv -vz <api-server> 6443
-
+```
 2. check private
 check if api endpoint is in private access
 
 WHO AM I ?
-
+```
 kube config -> user -> certificate secret
 kubectl get secret <secret-name> -o jsonpath='{.data.token}' | base64 -d
-
+```
 WHAT CAN I DO ?
-
+```
 kubectl auth can-i get pods -n my-ns
 
 kubectl get clusterrolebindings -o wide | grep <user|group>
-
+```
 API SERVER INTERNAL HEALTH
-
+```
 curl -k https://<api-server>:6443/healthz
 kubectl get --raw='\''/readyz?verbose'\'''
 
-check api server logs
+#check api server logs
 
 kubectl get pods --v=8
-
+```
 3. Error codes.
-
+```
 000/Timeout : Network blocked
             FW rules, VPN down, LB issues.
 401/Unauthorized : Bad credentials
@@ -3677,7 +3727,7 @@ kubectl get pods --v=8
             A script controller is spamming the api
 500/503 : Server Error
             API server is crashing or etcd is down.
-
+```
 ##
 
 Tips and tricks working with multicontainers.
@@ -3688,30 +3738,34 @@ Native sidecars that start before the app but stay running.
 
 2. Resource management.
 Pod resource management = sum of req/limit of all containers.
+```
 kubectl top pod <pod-name> --containers
-
+```
 3. Communication.
 Container A can reach B by localhost:port
 You cannot have two containers using the same port in a pod.
 
 4. EmptyDir.
+```yaml
 volumes:
 - name: shared-data
   emptyDir: {}
-
+```
 5. Debug with -c.
+```
 kubectl logs <pod-name> -c <container-name>
 kubectl exec -it <pod-name> -c <container-name> -- /bin/sh
 kubectl logs <pod-name> --all-containers
+````
 
 ##
 
 The different ports.
 
-containerPort       Pod/Deployment  The port your application code is actually listening on (e.g., Node.js on 3000).
-targetPort          Service         The port the Service sends traffic to. It must match the containerPort.
-port                Service         The internal cluster port. Other pods will use this port to talk to your service.
-nodePort            Service         A port opened on every Node's IP to allow external traffic (Range: 30000–32767).
+|containerPort       |Pod/Deployment  |The port your application code is actually listening on (e.g., Node.js on 3000).|
+|targetPort          |Service         |The port the Service sends traffic to. It must match the containerPort.|
+|port                |Service         |The internal cluster port. Other pods will use this port to talk to your service.|
+|nodePort            |Service         |A port opened on every Node's IP to allow external traffic (Range: 30000–32767).|
 
 ##
 
@@ -3812,4 +3866,77 @@ The Trick: If a question has 5 parts all in the same namespace, switch your defa
 Vim: echo "set ts=2 sw=2 et" > ~/.vimrc
 
 Shell: export do="--dry-run=client -o yaml" (Usage: k run pod1 --image=nginx $do > p1.yaml)
+
+
+
+
+
+
+
+/root/CKA/john.csr 
+
+cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: john-developer # example
+spec:
+  # This is an encoded CSR. Change this to the base64-encoded contents of myuser.csr
+  request: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1ZEQ0NBVHdDQVFBd0R6RU5NQXNHQTFVRUF3d0VhbTlvYmpDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRApnZ0VQQURDQ0FRb0NnZ0VCQUtoR1htYWVVRnJtWUFiWkc4K0FsUE1wTkR2eVplSWtzbitxWnNCZlhXK3JRWlMvCklNa0h4b0svN3lhSGhyc2J5VmpuSEVzSnNEdXFUZ29kVStLcU5CaXl1V0pCSTB2d1lHMmh5WjRiRmt1bFFNTFcKeDdZT3B4V3Myc1l5Z0t6MkxDRFh6RWJLMXRjazBGWTErbWJXcm9VNUlBTVJ6SzRqZDI3MU5TR1ExTkM3dTNwMwppWEY3NE1vMjBUZmhjSWdNTUxtMWM4Z0JhTWJTa3Q0NmM0d3g0bzNCWWliandhVWhoRU9KbFRRdVZBTThvSTZsClVOMEdmY2xPdjhudXVZZU1tdkI0SEpmS0dhRjN4MEo4c3JRNXBybFArL1hYMzlOaXZORkxSdnBiNjAyY1gvRjEKazNtZWx1dzZXVWNIczBWRkM3bnhMb3QrNldaTVhyRGNWSGkyZGxrQ0F3RUFBYUFBTUEwR0NTcUdTSWIzRFFFQgpDd1VBQTRJQkFRQU9JNXpqVnpoTW8xa0YwZlZaK0xIOGFzV2ZxS0JBUnBzNEpsVlZ5SnJGVm4wTC92MUJMYzJmCkQxcDUvdmRpeEVoeG9rR3ZKVnp2Z0ZBakdrRDJCQUMvcE55cUVsaXROQ3RYTXZkeFpGbkFqOHNGWk5LdmQrVDgKVkptczFWY3ZkWHhTek9ZZlJsZGFQTVFZZHJ5bEdKZmhkc2FoNUh4aDEwMm1BL3JIZDJZdlFuRmZ3N3hEdjZNVApMR0RZS3lvbjY0eFdlQjdFOWtQK1RJbW1Fb1VpZG9TcTY2T2RWZjM0N0QxSlpiRTVZMEY5QUl4SWp6aFpheGU4CkcwNm9TSjFPVU43RThjbG16M3dYcStudHlZL0tsWnVpRUUyRDJ6anVCZklOMzE2UDNKUHZBWGhEMmFUWUVXM2IKNmh4RFEvS2ZoeGErd0JQa29TdUtzSENTclNXK0RORFIKLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tCg==
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 86400  # one day
+  usages:
+  - client auth
+EOF
+
+# webapp-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+  namespace: ingress-ns
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx # kubectl create ingress forget to do the ingress class TO CHECK ???
+  rules:
+  - host: kodekloud-ingress.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-svc
+            port:
+              number: 80
+
+
+
+kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup 172-17-1-13.default.pod
+
+each pod has an address in the form podIPseparatedwith-.default.pod
+
+##
+
+allow all on one port
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ingress-to-nptest
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      run: np-test-1
+  policyTypes:
+  - Ingress
+  ingress:
+  - ports:
+    - protocol: TCP
+      port: 80
+
+##
 
