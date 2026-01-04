@@ -4583,8 +4583,8 @@ kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0
 curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
 #download the crds
 ```
-# Inside custom-resources.yaml
 ```yaml
+# Inside custom-resources.yaml
 spec:
   calicoNetwork:
     ipPools:
