@@ -3954,7 +3954,9 @@ Used (Current): 256Mi
 Requested (New Pod): 80Mi
 
 Since 256Mi + 80Mi = 336Mi, which is greater than your 300Mi limit, Kubernetes blocks the creation of the Pod to prevent a quota violation.
+
 or
+
 Requested + Used > Limit
 
 ##
@@ -4288,6 +4290,7 @@ metadata:
     tier: node
   name: kube-flannel-cfg
   namespace: kube-flannel
+```
 ```
 #Apply the manifest by running the following command:
 
