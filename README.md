@@ -55,6 +55,8 @@ https://raghu.sh/new-cka-exam-tips-tricks-ft-gateway-api-cni-cri-csi-helm-kustom
 - crictl to debug pods on nodes
 - Call to k8s API using a secret mounted in a pod
 
+https://devopscube.com/
+https://devopscube.com/cka-exam-study-guide/
 
 
 ## QUESTIONS
@@ -3937,6 +3939,813 @@ spec:
   - ports:
     - protocol: TCP
       port: 80
+
+##
+
+ResourceQouta issue
+38s         Warning   FailedCreate        replicaset/backend-api-c5f6b4844    Error creating: pods "backend-api-c5f6b4844-mb5n6" is forbidden: exceeded quota: cpu-mem-quota, requested: requests.cpu=80m, used: requests.cpu=280m, limited: requests.cpu=300m
+
+Understanding the Math
+The error message gives you the exact numbers causing the "Forbidden" state:
+
+Limited (Max Allowed): 300Mi
+
+Used (Current): 256Mi
+
+Requested (New Pod): 80Mi
+
+Since 256Mi + 80Mi = 336Mi, which is greater than your 300Mi limit, Kubernetes blocks the creation of the Pod to prevent a quota violation.
+or
+Requested + Used > Limit
+
+##
+
+When do we need subPath ?
+```yaml
+volumeMounts:
+        - mountPath: /etc/nginx/conf.d/default.conf
+          name: nginx-conf-vol
+          subPath: default.conf    
+```
+https://www.youtube.com/watch?v=R_qhriT8zWY
+
+There are three main scenarios where subPath is essential:
+
+Injecting a single configuration file: You want to put a config.php or settings.yaml into an existing directory (like /etc/nginx/) without deleting the other files already there.
+
+Multiple containers using the same volume: You have a single Persistent Volume (PV) and you want Container A to use /data/logs/app1 and Container B to use /data/logs/app2.
+
+Database paths: When using a volume for a database (like MySQL), you often want the data to sit in a subfolder of the volume to keep the root directory clean of "lost+found" files that some filesystems create.
+
+Examples.
+```yaml
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+    volumeMounts:
+    - name: config-volume
+      mountPath: /etc/nginx/nginx.conf # The full destination path
+      subPath: nginx.conf             # The key/file inside the volume
+  volumes:
+  - name: config-volume
+    configMap:
+      name: my-nginx-config
+```
+```yaml
+spec:
+  containers:
+  - name: app-1
+    volumeMounts:
+    - name: shared-data
+      mountPath: /var/lib/data
+      subPath: app1-files # Mounts [VolumeRoot]/app1-files to /var/lib/data
+  - name: app-2
+    volumeMounts:
+    - name: shared-data
+      mountPath: /var/lib/data
+      subPath: app2-files # Mounts [VolumeRoot]/app2-files to /var/lib/data
+  volumes:
+  - name: shared-data
+    persistentVolumeClaim:
+      claimName: my-pvc
+```
+
+##
+
+A gateway listener has a hostname and an allowedroutes.
+
+Here is an example.
+```yaml
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: prod-gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: Same # Only routes in the same namespace can attach
+  - name: https
+    protocol: HTTPS
+    port: 443
+    hostname: "api.example.com"
+    tls:
+      mode: Terminate # Terminate SSL at the gateway
+      certificateRefs:
+      - name: site-cert-secret
+    allowedRoutes:
+      namespaces:
+        from: All # Any namespace can attach an HTTPRoute to this HTTPS listener
+```
+
+Protocol vs. Kind
+
+The protocol in the listener (like HTTPS) dictates which kind of route can be used.
+
+If protocol is HTTP/HTTPS, you attach HTTPRoutes.
+If protocol is TCP, you attach TCPRoutes.
+
+The "Handshake" (AllowedRoutes)
+
+This is the most powerful part of the Gateway API. It allows a cluster admin to control delegation. Using the allowedRoutes field, the admin can say:
+"Only the marketing team can attach routes to this listener."
+"Only HTTPS routes are allowed; no plain text HTTP."
+
+Hostname Isolation
+
+You can define multiple listeners on the same port (e.g., 443) as long as they have different hostnames. This allows you to terminate SSL with different certificates for app1.com and app2.com on a single shared Load Balancer IP.
+
+```yaml
+# Create the Gateway
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: web-gateway
+  namespace: nginx-gateway
+spec:
+  gatewayClassName: nginx
+  listeners:
+  - name: http
+    port: 80
+    protocol: HTTP
+    allowedRoutes: #MISSING
+      namespaces:  #MISSING
+        from: All  #MISSING
+```
+This field defines the relationship between the Gateway (usually managed by Cluster Admins) and the Routes (managed by App Developers).
+It has three main filters: namespaces, kinds, and selector.
+
+1. Filtering by namespace.
+```yaml
+allowedRoutes:
+  namespaces:
+    from: Selector
+    selector:
+      matchLabels:
+        exposed: "true"
+```
+2. Filtering by kind.
+```yaml
+allowedRoutes:
+  kinds:
+  - kind: HTTPRoute  # Only HTTP traffic allowed, no TCP/UDP
+```
+##
+
+where to find documented annotation for ingress redirect ssl ?
+for the exam ...
+in the search of the kubernetes documentation
+
+##
+
+Simplest method to get the env from a CM
+```yaml
+    spec:
+      containers:
+      - image: kodekloud/webapp-color
+        name: webapp-color-wl10
+        envFrom:
+        - configMapRef: 
+            name: webapp-wl10-config-map
+```
+##
+
+Tip on get event 
+```
+kubectl get event --field-selector involvedObject.name=<pod-name>
+```
+##
+
+```yaml
+#can we do shorter than ?
+
+    env:
+      - name: SECRET_USERNAME
+        valueFrom:
+          secretKeyRef:
+            name: mysecret
+            key: username
+      - name: SECRET_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: mysecret
+            key: password
+
+#yes we can with envFrom (could also be used for CM)
+    envFrom:
+      - secretRef:
+          name: mysecret
+
+#envFrom is a streamlined way to inject multiple environment variables into a container at once
+#envFrom tells the container to "import" all key-value pairs from an entire Secret or ConfigMap
+```
+##
+```
+crictl ps
+CONTAINER           IMAGE               CREATED             STATE               NAME                      ATTEMPT             POD ID              POD                                             NAMESPACE
+a91a26f74cd93       a389e107f4ff1       22 seconds ago      Running             kube-scheduler            1                   cb9d7f8fabcb7       kube-scheduler-cluster2-controlplane            kube-system
+2db71e154d0de       c2e17b8d0f4a3       22 seconds ago      Running             kube-apiserver            0                   1715fbb473c81       kube-apiserver-cluster2-controlplane            kube-system
+ea44779525109       8cab3d2a8bd0f       22 seconds ago      Running             kube-controller-manager   1                   4f48d090ccc06       kube-controller-manager-cluster2-controlplane   kube-system
+626009f1c8450       ead0a4a53df89       3 hours ago         Running             coredns                   0                   e8238b81f4aa9       coredns-7484cd47db-mr76f                        kube-system
+6b00ea482c35c       6331715a2ae96       3 hours ago         Running             calico-kube-controllers   0                   464475361bc74       calico-kube-controllers-5745477d4d-djv7g        kube-system
+8b043cc502ca4       ead0a4a53df89       3 hours ago         Running             coredns                   0                   ffe4aea0a3b9f       coredns-7484cd47db-nlpv5                        kube-system
+4106f15ea937f       c9fe3bce8a6d8       3 hours ago         Running             kube-flannel              0                   0e600af90ba7b       canal-zklr9                                     kube-system
+43901376ba258       feb26d4585d68       3 hours ago         Running             calico-node               0                   0e600af90ba7b       canal-zklr9                                     kube-system
+05d201ef4b737       040f9f8aac8cd       3 hours ago         Running             kube-proxy                0                   b068a33d17064       kube-proxy-bk6tr                                kube-system
+f44c170134dad       a9e7e6b294baf       3 hours ago         Running             etcd                      0                   a2310dc49e5ed       etcd-cluster2-controlplane                      kube-system
+```
+##
+```
+ss -tlnp | grep 6443
+LISTEN 0      4096                *:6443             *:*    users:(("kube-apiserver",pid=88077,fd=3)) 
+#api server should be running
+```
+##
+
+The connection to the server cluster2-controlplane:6443 was refused - did you specify the right host or port?
+
+1. Check if api server is running.
+```
+crictl ps 
+docker ps
+```
+If not running chekck the api manifest.
+```
+cat /etc/kubernetes/manifests/kube-apiserver.yaml
+#check typo in manifests
+```
+Check kubelet logs.
+```
+systemctl status kubelet
+journalctl -u kubelet -f
+```
+2. Verify kubeconfig.
+
+- check .kube/config
+  - check the permissions
+  - check the content
+  - check the ports number
+  - check the certificates
+  - check server address
+```
+kubeadm certs check-expiration
+openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout | grep Not
+```
+3. Check api server logs.
+```
+crictl logs <container-id>
+```
+4. Check pot/process listeners.
+```
+ss -nltp | grep 6443
+nc -vz <api-server-ip> 6443
+```
+5. Where to find api server ip if down.
+```
+grep server /etc/kubernetes/kubelet.conf
+grep -E "advertise-address|bind-address" /etc/kubernetes/manifests/kube-apiserver.yaml
+grep "server:" /etc/kubernetes/admin.conf
+grep "server:" ~/.kube/config
+grep server /etc/kubernetes/*.conf
+```
+
+##
+```
+kubectl -n spectra-1267 get pods --show-labels -l=mode=exam,type=external
+NAME     READY   STATUS    RESTARTS   AGE     LABELS
+pod-21   1/1     Running   0          3m44s   env=prod,mode=exam,type=external
+pod-23   1/1     Running   0          3m44s   env=dev,mode=exam,type=external
+```
+##
+
+how to create an external service pointing to an external IP outside of the cluster
+create an ep manually
+
+##
+
+ensure that service has an ep 
+if not re-create it with expose
+#OK
+
+##
+
+when modifying cm coredns
+```
+kubectl rollout restart deploy -n kube-system coredns
+```
+##
+
+1. Install the Flannel CNI
+Download the Flannel manifest file:
+```
+wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+```
+Edit the Flannel manifest to set the CIDR to 172.17.0.0/16:
+```
+vi kube-flannel.yml
+```
+Below is the structure of the CoreDNS configuration:
+```yaml
+apiVersion: v1
+data:
+  cni-conf.json: |
+    {
+      "name": "cbr0",
+      "cniVersion": "0.3.1",
+      "plugins": [
+        {
+          "type": "flannel",
+          "delegate": {
+            "hairpinMode": true,
+            "isDefaultGateway": true
+          }
+        },
+        {
+          "type": "portmap",
+          "capabilities": {
+            "portMappings": true
+          }
+        }
+      ]
+    }
+  net-conf.json: |
+    {
+      "Network": "172.17.0.0/16",   #Edited
+      "EnableNFTables": false,
+      "Backend": {
+        "Type": "vxlan"
+      }
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    app: flannel
+    k8s-app: flannel
+    tier: node
+  name: kube-flannel-cfg
+  namespace: kube-flannel
+```
+#Apply the manifest by running the following command:
+
+kubectl apply -f kube-flannel.yml
+```
+2. Test the pod-to-pod communication.
+```
+#Run an nginx image:
+kubectl run web-app --image nginx
+
+#Retrieve the IP address of the pod:
+kubectl get pod web-app -o jsonpath='{.status.podIP}'
+
+#Test the connection:
+kubectl run test --rm -it -n kube-public --image=jrecord/nettools --restart=Never -- curl <IP>
+
+#TO FIND IN DOCUMENTATION !!!
+otherwise below
+```
+##
+```
+wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+#OK
+
+#the cluster cidr can be found in kube-controller-manager
+
+grep cluster-cidr *
+kube-controller-manager.yaml:    - --cluster-cidr=172.17.0.0/16
+
+vi kube-flannel.yml
+#OK modified net-conf.json
+
+kubectl apply -f kube-flannel.yml
+#OK
+```
+##
+
+how to test an ingress
+
+```
+NAME                       CLASS    HOSTS   ADDRESS   PORTS   AGE
+nginx-ingress-cka04-svcn   <none>   *                 80      47s
+
+get the service 
+
+kubectl get svc nginx-service-cka04-svcn (of the ingress)
+NAME                       TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE
+nginx-service-cka04-svcn   ClusterIP   10.43.97.177   <none>        80/TCP    59m
+
+and curl on it 
+curl -I 10.43.97.177
+HTTP/1.1 200 OK
+...
+#OK
+```
+
+##
+
+can sort by in columns
+```
+kubectl -n spectra-1267 get pods -o custom-columns='POD_NAME:.metadata.name,IP_ADDR:.status.podIP' --sort-by=.status.podIP
+```
+##
+
+How to solve OOMKilled pods 
+Container is killed because the it exceeded the memory limit.
+To fix increase the memory limit.
+The node could also be out of memory.
+
+##
+
+external services
+
+from endpointslices documentation
+```
+#
+cluster3-controlplane  ~ ➜ kubectl  apply -f - <<EOF
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: external-webserver-cka03-svcn
+  namespace: kube-public
+  labels:
+    kubernetes.io/service-name: external-webserver-cka03-svcn
+addressType: IPv4
+ports:
+  - protocol: TCP
+    port: 9999
+endpoints:
+  - addresses:
+      - 192.168.222.128   # IP of student node
+EOF
+```
+##
+
+How to curl in kubernetes ?
+
+1. Curl a pod.
+- from another pod 
+```
+curl <pod-ip>:<port> #container port
+```
+- via port-forward
+
+```
+kubectl port-forward pod/<pod-name> <target-port>:<port>
+```
+2. Curl a service.
+- 
+```
+curl <service-name>.default.svc.cluster.local
+```
+
+- a clusterIP type service
+```
+curl <cluster-ip>:<port>
+```
+3. Curl an ingress.
+
+- with a header
+```
+curl -H "Host: app.example.com" http://<ingress-controller-ip>
+```
+- with a resolve (etc hosts like)
+```
+curl --resolve app.example.com:<ingress-ip> http://app.example.com
+```
+4. Gateway ip.
+```
+export GW_IP=$(kubectl get gtw <GATEWAY_NAME> -o jsonpath='{.status.addresses[0].value}')
+curl -H "Host: my-app.com" http://$GW_IP/v1/api
+```
+5. curlimages/curl
+```
+kubectl run curl-test --image=curlimages/curl --rm -it -- sh
+# Une fois dans le shell, vous pouvez tester vos services et IPs
+```
+
+##
+
+what are the most needed images for test
+
+1. The best.
+nicolaka/netshoot
+
+2. The dns.
+infoblox/dnstools
+
+3. Busybox.
+busybox
+
+4. Alpine.
+alpine #package manager: apk
+
+5. Curl.
+curlimages/curl
+
+6. Clients.
+postgres
+mysql
+redis
+minio/mc #s3 compatible client
+
+7. Cloud providers.
+amazon/aws-cli
+google/cloud-sdk
+
+8. Security and scan.
+
+praqma/network-multitool #networkpolicy
+
+owasp/zap2docker-stable #pen tests
+
+aquasec/trivy
+
+9. Performance testing.
+williamyeh/wrk
+polandj/stress-ng
+codesenberg/bombardier
+
+10. Ephemeral containers.
+```
+kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<container-name>
+```
+11. Others.
+alpine/k8s:1.XX #kubectl
+
+telepresence/telepresence #IDE
+
+sysdig/sysdig #what did my process before crashing ?
+
+
+##
+
+Curl options for debug.
+
+1. Visibility.
+
+-v #verbose
+-i #include cleaner response
+-s #silent
+
+2. Network.
+
+--resolver 
+#for ingress testing
+#etc hosts like
+#curl -v --resolve app.example.com:443:10.0.0.5 https://app.example.com
+-H 
+#header
+#curl -H "Host: api.internal.com" http://<load-balancer-ip>
+
+3. TLS/SSL.
+
+-k or --insecure
+--cacert #specify a custop CA
+--cert and --key
+
+4. Performance.
+```
+curl -so /dev/null -w "\
+  DNS Lookup:  %{time_namelookup}s\n\
+  TCP Connect: %{time_connect}s\n\
+  App Connect: %{time_appconnect}s\n\
+  TTFB:        %{time_starttransfer}s\n\
+  Total:       %{time_total}s\n" \
+  http://nginx-resolver-service.default.svc.cluster.local
+#OK
+
+curl -so /dev/null -w "\
+  DNS Lookup:  %{time_namelookup}s\n\
+  TCP Connect: %{time_connect}s\n\
+  App Connect: %{time_appconnect}s\n\
+  TTFB:        %{time_starttransfer}s\n\
+  Total:       %{time_total}s\n" \
+  http://nginx-resolver-service
+#OK
+
+curl -so /dev/null -w "\
+  DNS Lookup:  %{time_namelookup}s\n\
+  TCP Connect: %{time_connect}s\n\
+  App Connect: %{time_appconnect}s\n\
+  TTFB:        %{time_starttransfer}s\n\
+  Total:       %{time_total}s\n" \
+  http://www.google.com
+#OK
+
+alias kcurl='curl -so /dev/null -w "\n\033[1;36m»» Debugging: %{url_effective}\033[0m\n\n\
+\033[1;33m[Connection Times]\033[0m\n\
+DNS Lookup      :  %{time_namelookup}s\n\
+TCP Connect     :  %{time_connect}s\n\
+TLS Handshake   :  %{time_appconnect}s\n\n\
+\033[1;32m[Performance]\033[0m\n\
+Time to 1st Byte:  %{time_starttransfer}s\n\
+Total Time      :  %{time_total}s\n\n\
+\033[1;35m[Status]\033[0m\n\
+HTTP Code       :  %{http_code}\n\
+Size Download   :  %{size_download} bytes\n\n"'
+#OK 
+#color codes to debug
+```
+##
+
+Installing Flannel and Calico
+
+Flannel (no netpol) and Calico (netpol ready)
+
+1. Flannel
+```
+# download
+curl -O https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
+
+# Example: Changing 10.244.0.0/16 to 10.10.0.0/16
+sed -i 's/10.244.0.0\/16/10.10.0.0\/16/g' kube-flannel.yml
+
+kubectl apply -f kube-flannel.yml
+```
+2. Calico
+```
+kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/tigera-operator.yaml
+#install the operator
+
+curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.25.0/manifests/custom-resources.yaml
+#download the crds
+```
+# Inside custom-resources.yaml
+```yaml
+spec:
+  calicoNetwork:
+    ipPools:
+    - blockSize: 26
+      cidr: 10.10.0.0/16 # <-- Change this value here
+      encapsulation: VXLANCrossSubnet
+
+kubectl create -f custom-resources.yaml
+#apply
+```
+3. Places to find CIDR
+```
+#kube-proxy
+kubectl describe pod -n kube-system kube-proxy-xxxx | grep cluster-cidr
+
+#kube-controller-manager
+kubectl describe pod -n kube-system kube-controller-manager-control-plane | grep cluster-cidr
+```
+4. Others
+```
+# check kubelet logs
+journalctl -u kubelet -f
+
+#check if another CNI exists
+ls /etc/cni/net.d/
+#10-flannel.conflist or 10-calico.conflist
+
+#check the CNI pods
+kubectl -n kube-system get pods
+```
+
+##
+
+What to do when the service do not have an endpoint specified ?
+
+- Unmatch between pods labels and service selector.
+- External service, service has no selector. The ep has to be created manually.
+
+1. Fix the svc selector.
+- check pod labels
+```
+kubectl get pods --show-labels
+```
+- check service selector
+```
+kubectl describe svc <service-name>
+```
+- fix the service selector
+```
+kubectl edit svc <service-name>
+```
+2. Check if pod is ready.
+
+Kubernetes do not add ep to the service if pod is not ready.
+
+3. External service.
+
+If you are pointing to something outside the cluster, the service do not have a selector.
+You muste create the ep manually.
+
+From documentation https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/
+```yaml
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: example-abc # -> use same as service name
+  labels:
+    kubernetes.io/service-name: example
+addressType: IPv4
+ports:
+  - name: http
+    protocol: TCP
+    port: 80 # -> use external port 
+endpoints:
+  - addresses:
+      - "10.1.2.3" # -> use external IP
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-abc # -> same as endpoint name
+spec:
+  ports:
+    - port: 5432
+      targetPort: 5432     
+```
+
+Summary Checklist
+
+1. Check Labels: Do Pod labels = Service selector ? !!! !!! !!!
+2. Check Readiness: Are Pods 1/1 Ready?
+3. Check Ports: Does the Service targetPort match the containerPort of the Pod?
+4. Named Ports: If using names (e.g., port: http), ensure the name is defined identically in the Pod spec.
+
+##
+
+What can we edit and not in a deploy, pod, svc, ... ?
+
+It depend on the controller managing the object and whether the field is immutable.
+
+Deployments / StatefulSets / DaemonSets: Almost everything can be edited.
+Services: You can edit ports, selectors, and types.
+Pods: Pods are highly immutable.
+ConfigMap / Secrets: Everything.
+
+Use explain to know what is immutable or editable.
+
+Common Immutable Fields:
+
+PersistentVolumeClaims: storageClassName and accessModes.
+Services: spec.clusterIP.
+Jobs: spec.selector (after creation).
+
+Edit alternatives.
+- Replace.
+```
+# Export the current pod to YAML, change it, and replace it
+kubectl get pod <name> -o yaml > pod.yaml
+# Edit pod.yaml manually, then:
+kubectl replace --force -f pod.yaml
+```
+- Set.
+```
+kubectl set image deployment/my-deploy nginx=nginx:1.19.1
+```
+Tip to use VSC to edit kubernetes objects.
+```
+export KUBE_EDITOR="code --wait"
+```
+##
+
+how to come to the begining and end of the line on mac book terminal ?
+
+##
+
+```
+kubectl  apply -f - <<EOF
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: external-webserver-cka03-svcn
+  namespace: kube-public
+  labels:
+    kubernetes.io/service-name: external-webserver-cka03-svcn
+addressType: IPv4
+ports:
+  - protocol: TCP
+    port: 9999
+endpoints:
+  - addresses:
+      - 192.168.222.128   # IP of student node
+EOF
+```
+
+##
+
+error: no objects passed to apply
+no objects
+
+##
+
+how to know which ingressclass to use when not specified ?
+
+##
+
+Normal  WaitForFirstConsumer  1s (x10 over 2m11s)  persistentvolume-controller  waiting for first consumer to be created before binding
+
+Immediate (Default): The PVC is bound to a PV as soon as the claim is created.
+WaitForFirstConsumer: The PVC stays in a Pending state until a Pod (the "consumer") that uses this PVC is created and scheduled.
 
 ##
 
