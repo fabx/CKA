@@ -2896,7 +2896,7 @@ kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nsloo
 ```
 ##
 
-create use john
+create user john
 ```
 openssl genrsa -out john.key 2048
 
