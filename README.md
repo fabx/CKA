@@ -3869,12 +3869,9 @@ Vim: echo "set ts=2 sw=2 et" > ~/.vimrc
 
 Shell: export do="--dry-run=client -o yaml" (Usage: k run pod1 --image=nginx $do > p1.yaml)
 
+##
 
-
-
-
-
-
+```
 /root/CKA/john.csr 
 
 cat <<EOF | kubectl apply -f -
@@ -3890,7 +3887,8 @@ spec:
   usages:
   - client auth
 EOF
-
+```
+```yaml
 # webapp-ingress.yaml
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -3912,18 +3910,19 @@ spec:
             name: webapp-svc
             port:
               number: 80
+```
 
-
-
+```
 kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nslookup 172-17-1-13.default.pod
-
-each pod has an address in the form podIPseparatedwith-.default.pod
+#each pod has an address in the form podIPseparatedwith-.default.pod
+```
 
 ##
 
 allow all on one port
 
 ---
+```yaml
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -3939,7 +3938,7 @@ spec:
   - ports:
     - protocol: TCP
       port: 80
-
+```
 ##
 
 ResourceQouta issue
