@@ -4311,6 +4311,8 @@ kubectl run test --rm -it -n kube-public --image=jrecord/nettools --restart=Neve
 otherwise below
 ```
 ##
+
+Install Flannel.
 ```
 wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 #OK
@@ -4399,7 +4401,7 @@ curl <pod-ip>:<port> #container port
 kubectl port-forward pod/<pod-name> <target-port>:<port>
 ```
 2. Curl a service.
-- 
+- by name
 ```
 curl <service-name>.default.svc.cluster.local
 ```
@@ -4431,70 +4433,75 @@ kubectl run curl-test --image=curlimages/curl --rm -it -- sh
 
 ##
 
-what are the most needed images for test
+Most needed images for test. !!! !!! !!!
 
 1. The best.
+```
 nicolaka/netshoot
-
+```
 2. The dns.
+```
 infoblox/dnstools
-
+```
 3. Busybox.
+```
 busybox
-
+```
 4. Alpine.
+```
 alpine #package manager: apk
-
+```
 5. Curl.
+```
 curlimages/curl
-
+```
 6. Clients.
+```
 postgres
 mysql
 redis
 minio/mc #s3 compatible client
-
+```
 7. Cloud providers.
+```
 amazon/aws-cli
 google/cloud-sdk
-
+```
 8. Security and scan.
-
+```
 praqma/network-multitool #networkpolicy
-
 owasp/zap2docker-stable #pen tests
-
 aquasec/trivy
-
+```
 9. Performance testing.
+```
 williamyeh/wrk
 polandj/stress-ng
 codesenberg/bombardier
-
+```
 10. Ephemeral containers.
 ```
 kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<container-name>
 ```
 11. Others.
+```
 alpine/k8s:1.XX #kubectl
-
 telepresence/telepresence #IDE
-
 sysdig/sysdig #what did my process before crashing ?
-
+```
 
 ##
 
 Curl options for debug.
 
 1. Visibility.
-
+```
 -v #verbose
 -i #include cleaner response
 -s #silent
-
+```
 2. Network.
-
+```
 --resolver 
 #for ingress testing
 #etc hosts like
@@ -4502,13 +4509,13 @@ Curl options for debug.
 -H 
 #header
 #curl -H "Host: api.internal.com" http://<load-balancer-ip>
-
+```
 3. TLS/SSL.
-
+```
 -k or --insecure
 --cacert #specify a custop CA
 --cert and --key
-
+```
 4. Performance.
 ```
 curl -so /dev/null -w "\
