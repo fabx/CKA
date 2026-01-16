@@ -4758,3 +4758,127 @@ WaitForFirstConsumer: The PVC stays in a Pending state until a Pod (the "consume
 
 ##
 
+kubectl create vs kubectl apply
+
+1. create 
+
+- creates a new resource
+- in error if already exists
+- quick
+
+2. apply
+
+- creates or update
+- creates it if do not exist
+- updates if already exist
+
+
+##
+
+Just another debug set of commands.
+
+📌 Pod Health (Start Here)
+
+1. kubectl describe pod: Your main detective tool. Shows detailed state and events (scroll to the bottom for errors!).
+
+2. kubectl top pod: Checks current CPU & RAM usage to spot resource bottlenecks.
+
+3. kubectl get events --sort-by...: A chronological timeline of what happened recently in the cluster.
+
+4. kubectl get pods -o wide: The big picture view. See the Pod IP and exactly which Node it's running on.
+
+📌 Logs & Crashes (Why did it break?)
+
+5. kubectl logs <pod>: View the current application logs.
+
+6. kubectl logs -p <pod>: Life-saver for crash loops. Shows logs from the previous time it died.
+
+7. kubectl logs ... -c <container> --previous: Same as above, but targeting a specific container in multi-container pods.
+
+8. stern / kubetail: Tools to live-tail logs from many pods simultaneously.
+
+📌 Get Inside
+
+9. kubectl exec -it ... sh: Opens an interactive terminal inside the container to explore files or test connectivity.
+
+📌 Configs & Connections
+
+10. kubectl get deployment -o yaml: Dumps the full, raw configuration to check for setup errors.
+
+11. kubectl get endpoints: Verifies your Service is actually sending traffic to healthy pods.
+
+📌 Infrastructure & Access
+
+12. kubectl get nodes | grep NotReady: The quickest way to find broken underlying servers.
+
+13. kubectl auth can-i: Getting permission denied? This checks if you are allowed to perform a specific action.
+
+##
+
+what makes (which) control plane components to run in kube-system as pods or in systemd as processes ?
+
+1. Kubeadm - Static pods
+- kubelet is running in systemd, it will check in /etc/kubernetes/manifests and apply
+- kubectl -n kube-system get pods
+- in /etc/kubernetes/manifests
+- crictl logs or kubectl logs
+- edit the manifests files
+
+2. The hard way - systemd - 
+- systemctl status <service>
+- in /etc/systemd/system
+- journalctl -u <service>
+- edit the services and systemctl daemon-reload
+
+3. Always on systemd (because it is needed)
+- containerd or docker 
+- kubelet
+
+4. Tip
+If a control plane component is not found in /etc/kubernetes/manifests it is a systemd service: systemctl list-units-files
+
+##
+```
+kubectl top pods -A --sort-by=memory
+```
+##
+
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: certificates.k8s.io/v1
+kind: CertificateSigningRequest
+metadata:
+  name: john-developer 
+spec:
+  # This is an encoded CSR. Change this to the base64-encoded contents of myuser.csr
+  request: LSXXXXXXXXXXXXXXXXXXtCg==
+  signerName: kubernetes.io/kube-apiserver-client
+  expirationSeconds: 86400  # one day
+  usages:
+  - client auth
+EOF
+
+kubectl get csr john-developer -o jsonpath='{.status.certificate}'| base64 -d > john.crt
+
+kubectl config set-credentials john --client-key=/root/CKA/john.key --client-certificate=john.crt --embed-certs=true
+```
+##
+
+where to find the pod IP name ? 
+
+##
+
+```
+# To see the flags of the API server
+kubectl get --raw "/flagz"
+
+# To see the status of the API server
+kubectl get --raw "/statusz"
+
+# Example JSON request for v1.35
+curl -H "Accept: application/json" https://<api-server-ip>/statusz
+
+```
+
+Both K8sGPT and HolmesGPT are leaders in the "AI SRE" movement, but they approach troubleshooting from different angles. If K8sGPT is an expert inspector, HolmesGPT is an autonomous investigator.
+
