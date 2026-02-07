@@ -79,9 +79,7 @@ Killer.sh
 
 ID card needed for the exam.
 
-############
-
-Register for the exam
+## Register for the exam
 
 Should use the permis de conduire as id document
 
@@ -90,18 +88,16 @@ Must run the exam on Chrome because safari is failing the test and arc has a pro
 Peu de dispo avant deux semaines ...
 Idéalement je passe l'examen un mardi de 10:00 à 12:00
 
-##################
+## CKA Content.
 
-CKA
-
-Controller manager:
+### Controller manager:
 - running all the controllers
 - responsible for managing the state of the cluster
 - running in the kube-system namespace
 - kube-controller-manager
 - controllers are responsible for managing the state of the cluster
 
-scheduler:
+### scheduler:
 - responsible for scheduling pods on nodes
 - running in the kube-system namespace
 - kube-scheduler
@@ -109,7 +105,7 @@ scheduler:
 - kube-scheduler is the default scheduler
 - scheduler can be customized with custom schedulers
 
-kubelet:
+### kubelet:
 - responsible for managing the state of the node
 - running on each node
 - kubelet is responsible for managing the pods on the node
@@ -117,13 +113,13 @@ kubelet:
 - kubelet is responsible for managing the node itself
 - kubelet is responsible for managing the node's resources
 
-kube proxy:
+### kube proxy:
 - responsible for managing the network connectivity of the pods
 - running on each node
 - kube-proxy is responsible for managing the network connectivity of the pods and the services
 - using ip tables or ipvs to manage the network connectivity
 
-Pods:
+### Pods:
 - kind
 - apiVersion
 - metadata
@@ -157,7 +153,7 @@ kubectl create deployment --image=httpd:2.4-alpine httpd-frontend --replicas=3 -
 #OK
 ```
 
-# Service
+## Service
 - nodeport (from the service perspective)
   - nodeprort #on each node in the range 30000 - 32767
   - port #on the clusterIP
@@ -170,8 +166,9 @@ kubectl create deployment --image=httpd:2.4-alpine httpd-frontend --replicas=3 -
   - port #on the LB for external clients
   - targetPort #of the container
 
+##
 
-Exam tips
+## Exam tips
 ```
 kubectl run --image=nginx nginx
 #OK
@@ -208,6 +205,8 @@ kubectl expose deployment hr-webapp --type=nodePort --port=8080 --name=hr-web-ap
 #Then vi and change the nodePort because this is not an option
 ```
 
+## Imperative
+
 Resource            Trick to Generate
 - DaemonSet           Create Deployment YAML -> Change Kind -> Delete replicas
 - StatefulSet         Create Deployment YAML -> Change Kind -> Add serviceName
@@ -225,18 +224,20 @@ pod/httpd created
 #OK
 ```
 
-
-Labels and selectors
+### Labels and selectors
+```
 kubectl get pods --selector app=app1
+```
+##
 
-|Taints - Toleration
-NoSchedule
-PreferNoSchedule
-NoExecute #only new pods will be placed on the node and running pods w/o the tolerance are ejected
-It is used to evict a pod to run on a specific node.
-To let a pod run on a specific node, we will use affinity.
-Imaginez un taint (une souillure 🤢) comme un panneau "🚫 Interdit aux non-autorisés" sur un nœud de votre cluster Kubernetes.
-Ce panneau est là pour empêcher les pods ordinaires de s'exécuter sur ce nœud. 
+### Taints - Toleration
+- NoSchedule
+- PreferNoSchedule
+- NoExecute #only new pods will be placed on the node and running pods w/o the tolerance are ejected
+* It is used to evict a pod to run on a specific node.
+* To let a pod run on a specific node, we will use affinity.
+* Imaginez un taint (une souillure 🤢) comme un panneau "🚫 Interdit aux non-autorisés" sur un nœud de votre cluster Kubernetes.
+* Ce panneau est là pour empêcher les pods ordinaires de s'exécuter sur ce nœud. 
 
 The toleration could match the key with the operator exists or compare the key to a value with an operator.
 
@@ -257,7 +258,8 @@ tolerations:
   tolerationSeconds: 3600
 ```
 
-Tmux
+## 
+## Tmux
 ```
 tmux ls
 tmux attach -t
@@ -269,14 +271,15 @@ Ctrl-B d detach
 #OK
 ```
 
-More exam tips
+##
+
+### More exam tips
 ```
 kubectl node explain --recursive 
 #OKOKOK 
 
 kubectl explain deploy --recursive | grep replicas -C 5
 #OK
-
 
 Node selector (has limitations)
 Kubectl label nodes node-1 size=Large
@@ -302,60 +305,72 @@ kubectl create deployment my-dep --image=nginx --replicas=3
 #OK 
 ```
 
-Resources and limits
-Best choice is request but no limits
-LimitRange #to create default limit and requests on the ns
-Resource quotas #hard limits for requests and limits in the ns
+##
 
-Daemonsets
-Uses nodeAffinity and default scheduler
+### Resources and limits
 
+- Best choice is request but no limits
+- LimitRange: to create default limit and requests on the ns
+- Resource quotas: hard limits for requests and limits in the ns
 
-Static pods
-A static pod is a pod that is managed directly by the kubelet on a specific node
-/etc/kubernetes/manifests #checked by kubelet w/o kube scheduler
-Only for create pods ...
-Kubelet work at the pod level
-Staticpodpath or kubeconfig
-Docker ps or crictl ps
-Static pods for the control plane components they are ignored by kubescheduler
-Chicken and egg problem: This allows the essential control plane services to start up before the API server is fully operational, solving the bootstrapping challenge.
+##
+
+### Daemonsets
+- Uses nodeAffinity and default scheduler
+- It was using nodeName previously and it was scheduled by the daemonsetController
+
+##
+
+### Static pods
+- A static pod is a pod that is managed directly by the kubelet on a specific node
+- In /etc/kubernetes/manifests #checked by kubelet w/o kube scheduler
+- Only for create pods ...
+- Kubelet work at the pod level
+- Staticpodpath or kubeconfig
+- Docker ps or crictl ps
+- Static pods for the control plane components they are ignored by kubescheduler
+  - Chicken and egg problem: This allows the essential control plane services to start up before the API server is fully operational, solving the bootstrapping challenge.
 ```
 kubectl run --restart=Never --image=busybox static-busybox --dry-run=client -o yaml --command -- sleep 1000 > /etc/kubernetes/manifests/static-busybox.yaml
 #OK
 ```
 
-Priority classes
-Not used
-From 1 000 000 000 to -2 000 000 000
-Kube-system from 2 000 000 000
-globalDefault: true
-preemptionPolicy: PreemptLowerPriority #by default
+##
+
+### Priority classes
+- Not used
+- From 1 000 000 000 to -2 000 000 000
+- Kube-system from 2 000 000 000
+- globalDefault: true
+- preemptionPolicy: PreemptLowerPriority #by default
 
 ```
 kubectl get pods -o custom-columns="NAME:.metadata.name,PRIORITY:.spec.priorityClassName"
 ```
 
-Note remove priority when adding priorityClassName !!!
+- Note remove priority when adding priorityClassName !!!
 
-There are two high priority classes by default: system-cluster-critical and system-node-critical.
-By default a pod get a priority of 0.
+- There are two high priority classes by default: system-cluster-critical and system-node-critical.
+- By default a pod get a priority of 0.
 
-### 
-Multiple scheduler
+## 
+
+### Multiple scheduler
 
 KubeSchedulerConfiguration
-
+```
 Scheduler as a pod
 --config=/etc/kubernetes/xxx.yaml
-
+```
 ```yaml
 leaderElection:
   leaderElect: true
 ```
 
 In the pod ...
+```yaml
   schedulerName: xxx
+```
 ```
 kubectl get events -o wide
 kubectl logs xxx ...
@@ -363,10 +378,11 @@ kubectl logs xxx ...
 
 Search for multiple kube scheduler
 
-###
-Configuring Schduler Profile
+##
 
-Plugins
+## Configuring Schduler Profile
+
+### Plugins
 1. Scheduling queue -> ProritySort 
 2. Filtering -> NodeResourcesFit and NodeName and NodeUnschedulable
 3. Scoring -> NodeResourceFit and ImageLocality 
@@ -377,8 +393,9 @@ ExtensionPoints
 
 Multiple profiles in one KubeschedulerConfiguration
 
-###
-Admission controllers
+##
+
+### Admission controllers
 - AlwaysPullImages
 - DefaultStorageClass
 - EventRateLimit
@@ -395,36 +412,42 @@ ps -ef | grep kube-apiserver | grep admission-plugins !!!
 #OK
 ```
 
-###
+##
+
 Validating and mutating admission controllers
 
-Mutating run before validating
+- Mutating run before validating
+- For custom Mutating/validatingAdmissionWebhook
 
-For custom Mutating/validatingAdmissionWebhook
+- Admission Webhook Server must run
+- And configure web hook.
 
-Admission Webhook Server must run
-And configure web hook.
+##
 
-###
-Monitor cluster components
+### Monitor cluster components
 
-Metrics server is in memory server so no disk 
-
-Kubelet use cAdvisor
-
-Metric server is external and should be installed
-Kubctl top node/pod
+- Metrics server is in memory server so no disk 
+- Kubelet use cAdvisor
+- Metric server is external and should be installed
+- kubctl top node/pod
 
 ```
 kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
 
-Custom metrics
+##
+
+### Types of metrics
+
+* Metrics
+- for memory and cpu
+
+* Custom metrics
 - within the cluster
 - the application itself
 - for example http requests
 
-External metrics
+* External metrics
 - from outside the cluster or the application
 - the number of messages in a pub/sub queue
 
@@ -433,17 +456,18 @@ Monitor memory and cpu consumed by containers.
 kubectl top pods <pod-name> --containers --sort-by=memory
 ```
 
+##
 
-###
-Application logs
+### Application logs
 
 ```
 kubectl logs -f xxx
 kubectl logs -f pod-name container-name 
 ```
 
-###
-Deployment updates and rollback
+##
+
+### Deployment updates and rollback
 
 ```
 kubectl rollout status deploy/xxxx
@@ -460,8 +484,9 @@ Kubectl rollout undo deploy/xxxx
 
 kubectl set image deployments/frontend simple-webapp=kodekloud/webapp-color:v2
 
-###
-Application commands
+##
+
+### Application commands
 
 ```
 FROM Ubuntu
@@ -471,8 +496,9 @@ ENTRYPOINT ["sleep"]
 CMD ["5"]
 ```
 
-###
-Commands and arguments
+##
+
+### Commands and arguments
 
 ```yaml
 spec:
@@ -484,8 +510,9 @@ spec:
 ```
 !!! !!! !!!
 
-###
-Configure Env Var
+##
+
+### Configure Env Var
 
 ```
 env:
@@ -507,11 +534,12 @@ env:
         Key: xxxx
 ```
 
-###
-ConfigMaps
+##
 
-From doc Concepts / Configuration 
-From doc Tasks / Configure pods and containers
+### ConfigMaps
+
+- From doc Concepts / Configuration 
+- From doc Tasks / Configure pods and containers
 
 So 3 possibilites
 - Single value
@@ -530,15 +558,16 @@ spec:
 In pod with volumes ...
 ```yaml
 volumes:
-- name:
+  - name:
       configMap:
         name: xxx
 ```
-####
-Secrets
+##
 
-From doc Concepts / Configuration 
-From doc Tasks / Configure pods and containers
+### Secrets
+
+- From doc Concepts / Configuration 
+- From doc Tasks / Configure pods and containers
 
 3 possibilities
 - Single value
@@ -562,8 +591,9 @@ volumes:
     secret:
       secretName: xxxx
 ```
-###
-Encrypting Secret Data At Rest
+##
+
+### Encrypting Secret Data At Rest
 
 https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
 
@@ -591,25 +621,25 @@ Restart kubeapi-server
 crictl pods 
 #OK
 ```
-###
-Multi-container pods
+##
+
+### Multi-container pods
 
 - Lifecycle
 - network
 - Storage
 
-###
-Multi-container design pattern
+##
+
+### Multi-container design pattern
 
 - Col-located containers # share l n s # no order defined
 - Regular init-container # setup
 - Sidecar container # logger 
 
-#
-Co-located containers
+### Co-located containers
 
-#
-Regular init-container
+### Regular init-container
 
 ```yaml
 initContainers:
@@ -618,8 +648,7 @@ initContainers:
      command:
 ```
 
-#
-Sidecar container #is an init container but stay alive
+### Sidecar container #is an init container but stay alive
 
 ```yaml
 containers:
@@ -632,22 +661,19 @@ initContainers:
 ```
 https://learn.kodekloud.com/user/courses/cka-certification-course-certified-kubernetes-administrator/module/2ddcf79b-abb0-4aeb-ad0c-3d54c7b4fc64/lesson/27822812-d758-428d-91db-942db6800ab1 !!!
 
-##
-Intro to autoscaling
+## Intro to autoscaling
 
 - Cluster auto scaler (node)
 - HPA
 - VPA
 
-##
-HPA
+### HPA
 
 kubectl scale can be used to scale deployments and statefullsets
 
 Missing resource metrics -> because of missing resource requirements at the pod ??? 
 
-##
-VPA 
+### VPA 
 
 FEATURE_GATES=InPlacePodVerticalScaling=true
 
@@ -682,8 +708,7 @@ kubectl apply -f /root/vpa-rbac.yml
 git clone https://github.com/kubernetes/autoscaler.git
 cd autoscaler/vertical-pod-autoscaler
 ```
-##
-OS Upgrades
+## OS Upgrades
 
 ```
 kubectl drain node-1 --ignore-daemonsets
@@ -691,8 +716,7 @@ kubectl cordon node-1
 kubectl uncordon node-1
 ```
 
-##
-Kubernetes releases
+## Kubernetes releases
 
 Major.minor.patch
 
@@ -4881,4 +4905,364 @@ curl -H "Accept: application/json" https://<api-server-ip>/statusz
 ```
 
 Both K8sGPT and HolmesGPT are leaders in the "AI SRE" movement, but they approach troubleshooting from different angles. If K8sGPT is an expert inspector, HolmesGPT is an autonomous investigator.
+
+##
+
+Which resource is strictly required to allow a Gateway in 'Namespace A' to reference an HTTPRoute in 'Namespace B' safely?
+
+ReferenceGrant
+
+This resource provides a formal handshake that allows cross-namespace references, ensuring the owner of the target namespace explicitly permits the access.
+
+```yaml
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-gateway-to-secrets
+  namespace: certificate-mgr        # Where the protected resource lives
+spec:
+  from:                             # Who is asking?
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      namespace: infra
+  to:                               # What are they allowed to see?
+    - group: ""
+      kind: Secret
+```
+
+Key Components:
+
+from: Defines the source of the reference (The "Client").
+
+to: Defines the target of the reference (The "Resource").
+
+Important Rules to Remember
+
+Directional: The ReferenceGrant must reside in the same namespace as the resource being referred to (the target).
+
+No "Self-Grant": You don't need a ReferenceGrant for resources within the same namespace.
+
+Strictness: If a ReferenceGrant is deleted, the connection is severed, and the Gateway or Route will stop functioning for that 
+cross-namespace link.
+
+##
+
+A Cluster Operator wants to apply a specific load-balancing algorithm (e.g., Least Connections) across all Gateways of a certain type. Where is the most appropriate place to define this implementation-specific configuration?
+
+The GatewayClass uses parametersRef to point to vendor-specific configurations that apply to all Gateways using that class.
+
+##
+
+Policy Attachment is a core design pattern in the Gateway API intended to keep the main resources clean while allowing for extensible features.
+
+##
+
+One HttpRoute can be attached to many Gateways.
+The 'parentRefs' field in a Route is a list, allowing one set of routing rules to be reused across different Gateways.
+
+##
+
+La sécurité TLS d'une requête.
+
+client  -->  downstream (flux descendant) --> gateway (nginx or kong) -->  upstream (flux montant) -->  service
+
+TLS mode:
+- passthrough (la gateway ne touche pas au chiffrement)
+- terminate (fin de la requête chiffrée, généralement en clair ensuite)
+
+##
+
+https://github.com/kubernetes
+https://github.com/kubernetes/enhancements
+
+##
+
+Ensure no CR in secrets
+```bash
+# -n ensures no trailing newline/carriage return is added
+kubectl create secret generic my-secret --from-literal=password=$(echo -n 'my-password')
+
+# Removes all \r characters and creates the secret
+tr -d '\r' < secret-file.txt > clean-file.txt
+kubectl create secret generic my-file-secret --from-file=config=clean-file.txt
+
+# Use -n with echo and --decode-free pipes
+echo -n "my-password" | base64
+
+# a better alternative for most systems
+kubectl create secret generic my-secret --from-literal=password=$(printf %s 'my-password') 
+
+kubectl get secret my-secret -o jsonpath="{.data.password}" | base64 --decode | cat -A
+```
+##
+
+Review this one ...
+
+kind: StorageClass # Le menu
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: orange-stc-cka07-str
+provisioner: kubernetes.io/no-provisioner #no automatic disk creation, the admin must create the volume
+volumeBindingMode: WaitForFirstConsumer #this storage will be attached only when a first pod will need it
+                                        #ensure the storage is on the same node as the pod
+---
+apiVersion: v1
+kind: PersistentVolume # Le disque
+metadata:
+  name: orange-pv-cka07-str
+spec:
+  capacity:
+    storage: 150Mi
+  accessModes:
+  - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: orange-stc-cka07-str
+  local:
+    path: /opt/orange-data-cka07-str #this is local to a node, so it must start on a specific node -> node affinity
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - cluster1-controlplane
+---
+kind: PersistentVolumeClaim # La commande
+apiVersion: v1
+metadata:
+  name: orange-pvc-cka07-str
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: orange-stc-cka07-str
+  volumeName: orange-pv-cka07-str
+  resources:
+    requests:
+      storage: 128Mi
+
+##
+
+When creating a storage solution what are the common solutions ?
+
+pv + pvc (static provisioning) : no provisionner or empty storageClassName
+pv + storageclass (dynamic provisioning) : the provisioner will specify the driver or the plugin (aws ebs, pd gce, local, ...)
+pv + pvc + storageclass :
+- you have a pv and a pvc that are linked but you want a sc for organization purpose
+- local persistent volume
+- importing existing disk
+
+pv + pvc + pod
+pv + storageclass + pod
+pv + pvc + storageclass + pod
+
+For storage there are twos scenarios
+SC + PV + PVC
+SC + PVC (the PV is created by the SC)
+There is no way to get the PV or PVC created by the pod.
+
+##
+
+To be trained on external services with endpointslice be able to build a web server from a python everywhere if needed.
+
+Feature	    Python 2 (Legacy)	    Python 3 (Current)
+Module Name	SimpleHTTPServer	    http.server
+
+Common Error	None	ModuleNotFoundError
+Default Port	8000	8000
+
+```
+#with python2
+
+python -m SimpleHTTPServer 8000
+
+#with python3
+
+python -m http.server 8000
+python3 -m http.server 8000
+
+#there is a security risk because you are serving files localy
+
+#you can serve a directory
+
+python3 -m http.server 8000 -d /var/log/nginx
+```
+##
+
+This volume must be created on cluster1-node01
+-> 
+```yaml
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - cluster1-node01
+```
+!!! !!! !!!
+
+##
+
+How to verify the certificates are valid ?
+
+- PKI certificates and requirements (dcoumentation)
+- Certificate Management With Kubeadm (documentation)
+```
+kubeadm certs check-expiration
+```
+```
+cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep -E "cert|key|ca"
+
+openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
+
+The logs will usually scream x509: certificate signed by unknown authority or no such file or directory if a path in the manifest is wrong.
+
+##
+
+Verify a CNI plugin is OK.
+
+Deploy two simple Pods (like nginx) on different nodes.
+
+Exec into one Pod: kubectl exec -it <pod-a> -- sh.
+
+Try to ping the IP of the second Pod: ping <pod-b-ip>.
+
+##
+
+The "Big Picture" Flow
+
+When you run kubectl apply -f deployment.yaml, look at the "Chain of Command":
+1. Deployment Controller sees the new YAML $\rightarrow$ Creates a ReplicaSet.
+2. ReplicaSet Controller sees the new ReplicaSet $\rightarrow$ Creates Pod objects (pending).
+3. The Scheduler (a special kind of controller) $\rightarrow$ Assigns the Pods to a Node.
+4. Kubelet (the agent on the node) $\rightarrow$ Sees the assignment $\rightarrow$ Talks to Container Runtime (Docker/CRI-O) to pull the image and run it.
+5. Endpoints Controller $\rightarrow$ Notices the new Pod IPs $\rightarrow$ Updates the EndpointSlice.
+
+If you understand these loops, troubleshooting becomes logical. If a Pod won't start:
+Is the Scheduler failing to find a node?
+Is the ReplicaSet failing to trigger?
+Is the Kubelet failing to talk to the runtime?
+
+##
+
+1. The "Single Source of Truth": etcd
+Everything in Kubernetes is just a row in a database. When you run kubectl apply, you aren't "running a command"—you are updating a record in etcd.
+Why this is the key: The API Server is essentially a gatekeeper for etcd. Every other component (Kubelet, Scheduler, Controllers) is just a "watcher" that subscribes to updates from this database.
+Understanding the Internal: Kubernetes doesn't "push" commands to nodes. Instead, the Node (Kubelet) "watches" the API Server and says, "Oh, I see my name next to a new Pod in the database. I better start it."
+
+2. Labels and Selectors: The "Glue"
+In traditional IT, we used IP addresses or specific hostnames to connect things. In Kubernetes, nothing is hard-coded.
+Loose Coupling: A Service finds a Pod not by its name, but by its Labels.
+The Key: This allows Kubernetes to be "self-healing." If a Pod dies and a new one is created with a different IP, the Service doesn't care—it just looks for the Label again and finds the new IP instantly.
+
+3. The Kubelet: The "Worker Bee
+"While the Control Plane (the "Masters") makes the big decisions, the Kubelet is the most important component on the worker nodes.The "PodSpec" contract: The Kubelet receives a PodSpec (a YAML description of a Pod). Its only job is to ensure the containers described in that spec are running and healthy.
+The Key Concept: The Kubelet doesn't care about "Deployments" or "StatefulSets." It only sees "Pods." It bridges the gap between the high-level world of Kubernetes APIs and the low-level world of Linux (Namespaces, Cgroups, and Docker/Containerd).
+
+4. The "Common Language": The API Object Model
+To truly "get" Kubernetes, you have to realize that everything is an Object.
+A Node is an object.
+A Secret is an object.
+An Event is an object.
+A Pod is an object.
+They all follow the same structure:
+Metadata: Name, Namespace, Labels.Spec: What you want (Desired State).
+Status: What is actually happening (Current State).
+
+Summary: The "Mental Map"
+To master Kubernetes for the CKA or real-world architecture, look at it like this:
+LevelComponentKey Concept
+Brain         etcd        The only place where state is stored.
+Voice         API Server  The only way to talk to the brain.
+Muscle        Kubelet     The bridge between YAML and real containers.
+Logic         Controllers The "Reconciliation Loop" (Desired vs. Current).
+Connectivity  Labels      The dynamic "glue" that ignores IPs and names.
+
+The "Aha!" Moment
+The biggest secret to understanding Kubernetes is realizing it is asynchronous. When you run a command, it doesn't happen instantly. You are just changing the "Desired State" in the database, and then waiting for the "Nervous System" (Controllers) to notice and react.
+
+###########
+
+Investigations on kubectl unavailable.
+
+VERIFY ENTRY POINT
+
+1. Is kube-apiserver running ?
+
+crictl ps | grep kube-apiserver
+
+2. Check port binding.
+
+sudo netstat -tulnp | grep 6443
+
+VERIFY THE CHAIN
+
+1. Kubelet
+
+sudo systemctl status kubelet
+
+sudo journalctl -u kubelet -f
+
+Common Issue: Look for "Certificate expired" or "CNI plugin not initialized."
+
+2. etcd
+
+crictl ps | grep etcd
+
+#check etcd health
+ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
+  --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
+  endpoint health
+
+3. Manifests
+
+Check /etc/kubernetes/manifests
+
+3.1. Watch
+
+watch -n 1 sudo crictl ps -a
+
+3.2. Search for manifests errors in system logs
+
+sudo journalctl -u kubelet | grep -i "manifest"
+
+3.3. crictl logs
+
+sudo crictl ps -a | grep kube-apiserver | head -n 1
+# Replace <ID> with the result from the command above
+sudo crictl logs <ID>
+
+3.4. re launch
+
+# 1. Move it out to your home folder
+sudo mv /etc/kubernetes/manifests/kube-apiserver.yaml ~/
+
+# 2. Wait 30 seconds (ensure 'crictl ps' shows it is gone)
+
+# 3. Move it back
+sudo mv ~/kube-apiserver.yaml /etc/kubernetes/manifests/
+
+3.5. yaml linter
+
+python3 -c 'import yaml, sys; yaml.safe_load(sys.stdin)' < /etc/kubernetes/manifests/kube-apiserver.yaml
+
+
+3.6. kubeadm init dry-run
+
+kubeadm init phase control-plane all --dry-run
+#This command will detect the file is missing and generate a brand-new one based on the configuration stored in the kubeadm-config ConfigMap in your cluster.
+
+3.7. compare with a secondary control plane node
+
+diff /etc/kubernetes/manifests/*.yaml /tmp/kubernetes/manifests/*.yaml
+
+4. System
+
+sudo journalctl -k
+
+
 
