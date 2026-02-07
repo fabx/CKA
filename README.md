@@ -716,7 +716,7 @@ kubectl cordon node-1
 kubectl uncordon node-1
 ```
 
-## Kubernetes releases
+### Kubernetes releases
 
 Major.minor.patch
 
@@ -741,7 +741,7 @@ We need to upgrade one minor at a time.
 
 First upgrade the master then the nodes.
 
-##
+### Kubernetes upgrades.
 
 kubeadm upgrade plan
 
@@ -868,27 +868,24 @@ service kubelet restart
 ```
 
 
-##
+### etcd
 
 Working with etcdctl and etcdutl
-#NOT DOING THIS !!! !!! !!!
 
-##
-Kubernetes security primitives
+TODO
 
-##
-Authentication
+### Kubernetes security primitives
+
+### Authentication
 
 - Static password file
 - Static token file
 - Certificates
 - Identity services (LDAP)
 
-##
-TLS introduction
+## TLS introduction
 
-##
-TLS Basics
+### TLS Basics
 
 - We use asymmetric key to exchange a symmetric key.
 - The symmetric key is used to encrypt the traffic.
@@ -913,14 +910,14 @@ The purpose of the certificate is to provide a way for you to trust that a publi
 The CA.crt root should be distributed to all.
 
 
-###
-TLS kubernetes
+### TLS kubernetes
 
 There are client (certificate and private key) and server (certificate and private key) certificates and there is a certificate (certificate and private key) authority.
 
 
 ##
-Certificate details.
+
+###Certificate details.
 
 Openssl tool.
 
@@ -975,7 +972,8 @@ openssl x509 -req -in apiserver.csr -CA ca.crt -CAkey ca.key -CAcreateserial -ou
 -> apiserver.crt
 ```
 ##
-View certificate details
+
+### View certificate details
 ```
 cat /etc/kubernetes/manifests/kube-apiserver.yaml
 
@@ -992,7 +990,7 @@ openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
 #OK
 ```
 
-Use of openssl
+### Use of openssl
 
 The typical openssl usage is genrsa - req - x509
 ```
@@ -1012,7 +1010,10 @@ openssl x509 -in certificate.crt -noout -text
 
 openssl s_client -connect google.com:443 2>/dev/null | openssl x509 -noout -text
 ```
+
 ##
+
+### crictl
 
 ```
 crictl ps
@@ -1047,7 +1048,8 @@ spec:
 ```
 
 ##
-Kubeconfig
+
+### Kubeconfig
 ```
 kubectl config view
 kubectl config use-context prod-user@production
@@ -1057,13 +1059,15 @@ kubectl config --kubeconfig=/root/my-kube-config use-context research
 export KUBECONFIG=/root/my-kube-config
 ```
 ##
+
 API Groups
 ```
 Kubectl proxy #is not kube proxy
 curl http://localhost:8001 -k
 ```
 ##
-Authorization
+
+### Authorization
 
 - Node #kubelet with certificate
 - ABAC
@@ -1082,8 +1086,7 @@ Open policy agent.
 
 Authorization-mode=Nodde,RBAC,Webhook #when denied pass to the next module
 
-##
-RBAC
+### RBAC
 
 ```
 kubectl auth can-i create deployments
@@ -1141,8 +1144,7 @@ rules:
   - create
 ```
 
-##
-Cluster role
+### Cluster role
 ```
 kubectl create clusterrole access-node --verb "*" --resource nodes
 kubectl create clusterrolebinding access-node-michelle --user michelle --clusterrole access-node 
@@ -1150,8 +1152,10 @@ kubectl create clusterrolebinding access-node-michelle --user michelle --cluster
 kubectl create clusterrole storage-admin --resource persistentvolumes,storageclasses --verb "*" 
 kubectl create clusterrolebinding michelle-storage-admin --user michelle --clusterrole storage-admin 
 ```
+
 ##
-Service Accounts
+
+### Service Accounts
 
 - Every service account should have a token associated with it.
 - The token can be used to access the kube api server.
@@ -1170,13 +1174,16 @@ Disable automountServiceAccountToken is a best security practice.
 ```yaml
 automountServiceAccountToken: false
 ```
-##
-Image Security
 
+##
+
+### Image Security
+
+```yaml
 Image: docker.io/library/nginx
 
 Image: <registry>/<user/account>/<image/repository>
-
+```
 
 For private repository
 ```
@@ -1187,11 +1194,9 @@ Inside pod ...
 imagePullSecrets:
 - ame: regcred
 ```
-##
-Docker security
+### Docker security
 
-##
-Security Context
+### Security Context
 
 - Linux capabilities
 - User id
@@ -1202,8 +1207,10 @@ securityContext:
   Capabilities:
     Add: ["MAC_ADMIN"]
 ```
+
 ##
-Network Policies
+
+### Network Policies
 ```yaml
 policyTypes:
 - Ingress
@@ -1273,8 +1280,10 @@ spec:
     - port: 53
       protocol: TCP
 ```
+
 ##
-Custom resource definition
+
+### Custom resource definition
 
 flightticket.yaml
 ```yaml
@@ -1331,18 +1340,18 @@ spec:
   dataField: 2
   access: true
 ```
+
 ##
-Custom Controllers
+
+### Custom Controllers
 
 https://github.com/kubernetes/sample-controller
 
-##
-Operator Framework
+### Operator Framework
 
 https://operatorhub.io/
 
-##
-Docker storage
+### Docker storage
 
 /var/lib/docker/volumes
 Layered architecture
@@ -1366,19 +1375,16 @@ Storage drivers
 - Overlay
 - Overlay 2
 
-##
-Volume driver plugins in docker
+### Volume driver plugins in docker
 ```
 docker run -it --name mysql --volume-driver rexray/ebs --mount src=ebs-vol,target=/var/lib/mysql mysql
 ```
-##
-Container storage interface
 
-##
-Volumes
+### Container storage interface
 
-##
-Persistent Volumes
+### Volumes
+
+### Persistent Volumes
 
 PV (admin)
 PVC (users)
@@ -1402,8 +1408,7 @@ spec:
       volumeID: xxx
       fsType: ext4
 ```
-##
-PersitentVolumeClaims
+### PersitentVolumeClaims
 
 One to one relation between PVC and PV !!!
 
@@ -1419,14 +1424,13 @@ spec:
     Requests: 
       Storage: 500Mi 
 ```
-persistemtVolumeReclaimPolicy: #what happens to the volume when the pvc is deleted 
-  - Retain #not deleted but not available, usefull to protect data !!!
+persistemtVolumeReclaimPolicy: (what happens to the volume when the pvc is deleted) 
+  - Retain : not deleted but not available, usefull to protect data !!!
   - Delete
-  - Recycle #deprecated replaced by delete
+  - Recycle : deprecated replaced by delete
  
 
-##
-Storage class
+### Storage class
 
 Dynamic provisioning.
 
@@ -1444,10 +1448,12 @@ PV will be created automatically.
 We specify the SC in the PVC.
 
 ##
-Linux networking basics
+
+### Linux networking basics
 
 ##
-DNS
+
+### DNS
 
 ```
 /etc/hosts
@@ -1466,9 +1472,10 @@ nslookup or dig #do not consider host file
 ```
 
 ##
-Network namespaces
 
-#to RELISTEN BEST GLOBAL NETWORK EXPLANATION !!! !!! !!!
+### Network namespaces
+
+TOREDO: RELISTEN BEST GLOBAL NETWORK EXPLANATION !!! !!! !!!
 ```
 ip netns add red
 ip netns add blue
@@ -1486,8 +1493,7 @@ ip nets exec red arp
 
 #We may use open vSwitch to connect ns.
 ```
-##
-Docker networking
+### Docker networking
 
 - None
 - Host
@@ -1513,13 +1519,11 @@ Docker port mapping is done with iptables native.
 7. Bring the interfaces up
 8. Enable NAT - IP masquerade
 
-##
-CNI
+### CNI
 
 Docker does not implement CNI but CNM.
 
-##
-Networking cluster node.
+### Networking cluster node.
 
 Commands to use ... !!! !!! !!!
 
@@ -1537,12 +1541,12 @@ netstat -anp
 netstat -anp | grep etcd | grep 2380 | wc -l
 ```
 ##
-Pod networking
+### Pod networking
 
 ??? TO RE READ IF NEEDED ???
 
 ##
-CNI in kubernetes
+### CNI in kubernetes
 
 ##
 CNI Weave
@@ -1569,7 +1573,7 @@ kubectl apply -f custom-resources.yaml
 watch kubectl get pods -A
 ```
 ##
-Service networking
+### Service networking
 
 Is implemented through iptables and NAT rules on the nodes by kube-proxy.
 The service is so translated into ip node and port.
@@ -1585,7 +1589,7 @@ Service range:
 --service-cluster-ip-range=172.20.0.0/16
 ```
 ##
-Cluster DNS
+### Cluster DNS
 
 For service
 ```
@@ -1604,7 +1608,7 @@ curl http://10-244-2-5.apps.pod.cluster.local
 curl http://<IP>.<namespace>.pod.cluster.local
 ```
 ##
-CoreDNS in kubernetes
+### CoreDNS in kubernetes
 
 From 1.20 kubeDNS -> CoreDNS
 
@@ -1622,15 +1626,15 @@ forward: A global rule for all external DNS queries.
 stubDomains: A specific rule for a particular domain.
 
 ##
-Ingress
+### Ingress
 ```
 kubectl create ingress --help
 ```
 apiVersion: networking.k8s.io/v1
 
 
-###
-Gateway api
+##
+### Gateway api
 
 - GatewayClass
 - Gateway
@@ -1709,7 +1713,7 @@ spec:
 ```
 ##
 
-Migrate from ingress to gateway
+### Migrate from ingress to gateway
 
 1. Install a gateway controller
 
@@ -1776,22 +1780,22 @@ spec:
 EOF
 ```
 ##
-Design a Kubernetes cluster
+### Design a Kubernetes cluster
 
 ##
-Choosing kubernetes infrastructure
+### Choosing kubernetes infrastructure
  
 ##
-Configure HA
+### Configure HA
 
 ##
-ETCD in HA
+### ETCD in HA
 
 ##
-Introduction to deployment
+### Introduction to deployment
 
 ##
-KUBEADM
+### KUBEADM
 Cluster installation
 ```
 sudo apt-mark unhold kubeadm && \
@@ -1816,14 +1820,16 @@ systemctl start cri-docker
 systemctl enable cri-docker
 ```
 
-##
+## 
+
+## Helm
 What is helm
 
 ##
-Installation and configuration of helm
+### Installation and configuration of helm
 
 ##
-A quick note about Helm 2
+### A quick note about Helm 2
 
 3 way strategic merge patch
 - Previuos release 
@@ -1831,7 +1837,7 @@ A quick note about Helm 2
 - Live state
 
 ##
-Helm components
+### Helm components
 
 - Helm cli
 - Charts
@@ -1846,11 +1852,11 @@ Helm charts
 - Release #differente releases of the same chart
 
 Helm repositories
-Artifacthub.io
-6311 packages
+- Artifacthub.io
+- 6311 packages
 
 ##
-Helm charts
+### Helm charts
 ```
 helm install <release> <repo/chart>
 
@@ -1869,7 +1875,7 @@ Dependencies
 -> so need to add the dependency helm ...
 
 ##
-Working with helm
+### Working with helm
 ```
 helm search hub repo
 
@@ -1880,7 +1886,7 @@ helm repo list
 helm repo update #refresh the repo locally
 ```
 ##
-Customize chart parameters
+### Customize chart parameters
 ```
 helm install --values custom-values.yaml my-release bitnami/wordpress
 
@@ -1889,7 +1895,7 @@ helm pull bitnami/wordpress #creates a directory
 helm install my-release ./wordpress
 ```
 ##
-Helm lifecycle management
+### Helm lifecycle management
 ```
 helm history nginx-release
 helm rollback nginx-release 1 #creates revision 1 ??? 3
@@ -1901,7 +1907,7 @@ helm upgrade dazzling-web bitnami/nginx --version 18.3.6
 
 ##
 
-Helm install w/o CRDs 
+### Helm install w/o CRDs 
 
 It will skip the installation of the CRDs contained in the crds/ folder.
 You can do it by using --skip-crds
@@ -1916,7 +1922,7 @@ helm upgrade kk-mock1 kk-mock1/nginx -n kk-ns --version=18.1.15
 
 ##
 
-Use of helm template
+### Use of helm template
 ```yaml
 {{ .Values.myValue | quote }}: Wraps the value in quotes.
 {{ .Values.myValue | upper }}: Converts text to UPPERCASE.
@@ -1941,7 +1947,7 @@ env:
 
 ##
 
-Some helm commands.
+### Some helm commands.
 
 ```
 helm repo add nginx-stable https://helm.nginx.com/stable
@@ -1955,11 +1961,14 @@ helm rollback my-nginx-ingress 3 -n nginx-ingress
 ```
 
 ##
-Kustomize problem statement
+
+## Kustomize
+
+### Kustomize problem statement
 
 - Base
 - Overlays
-
+```
 k8s/
 |- base/
 |  |- kustomization.yaml
@@ -1976,29 +1985,29 @@ k8s/
    |- prod/
       |- kustomization.yaml
       - config-map.yaml
-
+```
 You may need to update kustomize to get the latest.
 
 ##
-Kustomize vs Helm
+### Kustomize vs Helm
 
 ##
-Install kustomize
+### Install kustomize
 
 ##
 kustomization.yaml
-
+```yaml
 resources:
   - ngnix-depl.yaml
   - nginx-service.yaml
 
 commonLabels:
   company: KodeKloud
-
+```
 kustomize build k8s/ #outputs to terminal does not apply
 
 ##
-Kustomize output
+### Kustomize output
 ```
 kustomize build k8s/ | kubectl apply -f -
 #or
@@ -2010,7 +2019,7 @@ kubectl delete -k k8s/
 ```
 
 ##
-Managing directories
+### Managing directories
 
 k8s/kustomization.yaml
 
@@ -2030,7 +2039,7 @@ resources:
   - db-service.yaml
 ```
 ##
-Common Transformers
+### Common Transformers
 
 - commonLabel
 - namePrefix
@@ -2039,7 +2048,7 @@ Common Transformers
 - commonAnnotations
 
 ###
-Image transformers
+### Image transformers
 
 kustomization.yaml
 ```yaml
@@ -2065,7 +2074,7 @@ https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/
 
 
 ##
-Patch intro
+### Patch intro
 
 Types
 - add 
@@ -2082,7 +2091,7 @@ Target
 
 Value
 
-## Json 6902 patch
+### Json 6902 patch
 
 kustomization.yaml
 ```yaml
@@ -2102,7 +2111,7 @@ patches:
         value: 5
 ```
 
-## Strategic merge patch
+### Strategic merge patch
 
 kustomization.yaml
 ```yaml
@@ -2117,15 +2126,15 @@ patches:
         replicas: 5
 ```
 ##
-Different types of patches
+### Different types of patches
 
 ##
-Patches dictionary
+### Patches dictionary
 
-#TODO get the dictionary in yaml ??? YES TODO
+TODO: get the dictionary in yaml ??? YES TODO
 
 ##
-Patches list
+### Patches list
 
 Replace Json6902 
 
@@ -2165,7 +2174,7 @@ spec:
           image: haporxy
 ```
 ##
-Add Json6902
+### Add Json6902
 
 kustomization.yaml
 ```yaml
@@ -2182,7 +2191,7 @@ patches:
           image: haproxy
 ```
 
-Add strategic merge patch
+### Add strategic merge patch
 
 kustomization.yaml
 ```yaml
@@ -2205,7 +2214,7 @@ spec:
 ```
 
 
-Delete list Json6902
+### Delete list Json6902
 
 kustomization.yaml
 ```yaml
@@ -2222,7 +2231,7 @@ patches:
           image: haproxy
 ```
 
-Delete list strategic merge patch
+### Delete list strategic merge patch
 
 kustomization.yaml
 ```yaml
@@ -2242,13 +2251,13 @@ spec:
       containers:
         - $patch: delete
           name: haproxy
-````
+```
           
 ##
-Overlays
+### Overlays
 
 ##
-Components
+### Components
 
 ```
 k8s/
@@ -2299,18 +2308,18 @@ components:
 
 ##
 
+### Use expose to create a service.
+
 ```
 kubectl expose deployment hr-webapp --type=nodePort --port=8080 --name=hr-web-app-service --dry-run=client -o yaml
 #Then vi and change the nodePort
 ```
 
-
 kubectl apply -k "https://github.com/kubernetes-sigs/kustomize/releases/latest/download/kustomize-crds.yaml"
 
 
 ##
-Json path
-
+### Json path
 
 ```json
 $[0] #the first element of the root array
@@ -2349,7 +2358,8 @@ $[-3:] #the 3 last elements
 ```
  
 ##
-Json Path for kubernetes
+
+### Json Path for kubernetes
 ```
 kubectl get pods -o=jsonpath'{ .items[0].spec.containers[0].image }'
 ```
@@ -2384,7 +2394,7 @@ kubectl config view --kubeconfig /root/my-kube-config -o=jsonpath='{.contexts[0]
 ##
 ##
 
-**EXAM TIPS AND TRICKS**
+## EXAM TIPS AND TRICKS
 
 ##
 
@@ -2399,6 +2409,8 @@ tips for searching the documentation
 
 
 ##
+
+### How to get apiVersion and kind
 
 ```
 kubectl api-resources
@@ -2425,6 +2437,9 @@ spec:
 
 #OK
 ```
+
+### kubectl completion
+
 ```
 #ensure kubectl completion is enabled in kubectl quick reference ...
 
@@ -2434,7 +2449,7 @@ echo "source <(kubectl completion bash)" >> ~/.bashrc # add autocomplete permane
 ##
 
 
-crictl 
+### crictl 
 
 can be installed by apt on the node or by downloading the binary from github
 
@@ -2458,7 +2473,7 @@ https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/
 
 ##
 
-Call the kubernetes API using a secret mounted in a pod
+### Call the kubernetes API using a secret mounted in a pod
 
 1. Create a service account
 2. Create a role
@@ -2487,7 +2502,7 @@ roleRef:
 
 ##
 
-New last tips and tricks
+### New last tips and tricks
 
 The `--previous` flag with `kubectl logs` is specifically designed to retrieve logs from a previous instance of a container that has crashed and restarted.
 
@@ -2497,7 +2512,7 @@ An `emptyDir` volume is the standard method for sharing a temporary directory be
 
 ##
 
-CM and Secrets
+### CM and Secrets
 
 Kubernetes automatically updates a Pod's mounted `ConfigMap` volume with a slight delay (typically on the order of a minute) after the `ConfigMap` resource is updated. This allows the application to read the new configuration without a Pod restart.
 
@@ -2526,6 +2541,8 @@ Is considered better than mounting a secret as a volume.
 
 ##
 
+### StatefulSet
+
 A `StatefulSet` uses a `Headless Service` (a Service with `clusterIP: None`) to provide a stable, unique DNS entry for each Pod replica.
 This, combined with the Pod's stable name, gives it a persistent network identity.
 -> Stable Network Identifiers: A StatefulSet, along with a Headless Service, creates stable network identities for each Pod.
@@ -2537,6 +2554,8 @@ where each replica needs its own storage. The PVCs and their associated Persiste
 
 ##
 
+### Storage modes.
+
 ReadWriteOnce     (RWO)   #once by node
 
 ReadWriteOncePod  (RWOP)  #once by pod
@@ -2545,13 +2564,11 @@ ReadWriteMany     (RWX)
 
 ReadOnlyMany      (ROX)
 
-
 ##
 
+### NodeName
+
 Setting the `NodeName` field in a Pod's spec directly tells the `kubelet` on that specific node to create the Pod, effectively bypassing the `kube-scheduler`.
-
-
-
 
 ##
 
