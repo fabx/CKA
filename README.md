@@ -4135,7 +4135,7 @@ spec:
       namespaces:  #MISSING
         from: All  #MISSING
 ```
-This field defines the relationship between the Gateway (usually managed by Cluster Admins) and the Routes (managed by App Developers).
+This field (allowedRoutes) defines the relationship between the Gateway (usually managed by Cluster Admins) and the Routes (managed by App Developers).
 It has three main filters: namespaces, kinds, and selector.
 
 1. Filtering by namespace.
@@ -4155,13 +4155,17 @@ allowedRoutes:
 ```
 ##
 
+### annotations in ingress
+
 where to find documented annotation for ingress redirect ssl ?
 for the exam ...
 in the search of the kubernetes documentation
+And using kubectl create ingress.
 
 ##
 
-Simplest method to get the env from a CM
+### Simplest method to get the env from a CM
+
 ```yaml
     spec:
       containers:
@@ -4173,11 +4177,14 @@ Simplest method to get the env from a CM
 ```
 ##
 
-Tip on get event 
+### Tip on get event for a specific object
+
 ```
 kubectl get event --field-selector involvedObject.name=<pod-name>
 ```
 ##
+
+### using envFrom
 
 ```yaml
 #can we do shorter than ?
@@ -4203,6 +4210,9 @@ kubectl get event --field-selector involvedObject.name=<pod-name>
 #envFrom tells the container to "import" all key-value pairs from an entire Secret or ConfigMap
 ```
 ##
+
+### crictl
+
 ```
 crictl ps
 CONTAINER           IMAGE               CREATED             STATE               NAME                      ATTEMPT             POD ID              POD                                             NAMESPACE
@@ -4218,14 +4228,30 @@ ea44779525109       8cab3d2a8bd0f       22 seconds ago      Running             
 f44c170134dad       a9e7e6b294baf       3 hours ago         Running             etcd                      0                   a2310dc49e5ed       etcd-cluster2-controlplane                      kube-system
 ```
 ##
+
+### who's listening on this port ?
+
 ```
 ss -tlnp | grep 6443
 LISTEN 0      4096                *:6443             *:*    users:(("kube-apiserver",pid=88077,fd=3)) 
 #api server should be running
 ```
+
+or 
+
+```
+ss -tulnp
+netstat -tulnp
+lsof -i :443
+fuser -v 80/tcp
+```
 ##
 
+### did you specify the right host or port?
+
 The connection to the server cluster2-controlplane:6443 was refused - did you specify the right host or port?
+
+!!! !!! !!!
 
 1. Check if api server is running.
 ```
@@ -4241,6 +4267,9 @@ Check kubelet logs.
 ```
 systemctl status kubelet
 journalctl -u kubelet -f
+#enable or restart kubelet
+systemctl enable --now kubelet
+systemctl start kubelet
 ```
 2. Verify kubeconfig.
 
@@ -4257,6 +4286,8 @@ openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout | grep Not
 3. Check api server logs.
 ```
 crictl logs <container-id>
+#Look for containers with status Exited or Created (but not Running).
+#Look for etcd or cert.
 ```
 4. Check pot/process listeners.
 ```
@@ -4271,7 +4302,14 @@ grep "server:" /etc/kubernetes/admin.conf
 grep "server:" ~/.kube/config
 grep server /etc/kubernetes/*.conf
 ```
-
+6. Check etcd health.
+```
+ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  endpoint health
+```
 ##
 ```
 kubectl -n spectra-1267 get pods --show-labels -l=mode=exam,type=external
@@ -4281,24 +4319,21 @@ pod-23   1/1     Running   0          3m44s   env=dev,mode=exam,type=external
 ```
 ##
 
-how to create an external service pointing to an external IP outside of the cluster
-create an ep manually
-
-##
-
-ensure that service has an ep 
+### ensure that service has an endpoint
+```
 if not re-create it with expose
 #OK
-
+```
 ##
 
-when modifying cm coredns
+### when modifying cm coredns
 ```
 kubectl rollout restart deploy -n kube-system coredns
 ```
 ##
 
-1. Install the Flannel CNI
+### Install the Flannel CNI
+1. Install
 Download the Flannel manifest file:
 ```
 wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
@@ -4369,7 +4404,7 @@ otherwise below
 ```
 ##
 
-Install Flannel.
+### Install Flannel.
 ```
 wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 #OK
@@ -4387,7 +4422,7 @@ kubectl apply -f kube-flannel.yml
 ```
 ##
 
-how to test an ingress
+### how to test an ingress
 
 ```
 NAME                       CLASS    HOSTS   ADDRESS   PORTS   AGE
@@ -4408,7 +4443,7 @@ HTTP/1.1 200 OK
 
 ##
 
-can sort by in columns
+### can sort by in columns
 ```
 kubectl -n spectra-1267 get pods -o custom-columns='POD_NAME:.metadata.name,IP_ADDR:.status.podIP' --sort-by=.status.podIP
 ```
@@ -4421,7 +4456,7 @@ The node could also be out of memory.
 
 ##
 
-external services
+### external services
 
 from endpointslices documentation
 ```
@@ -4445,7 +4480,7 @@ EOF
 ```
 ##
 
-How to curl in kubernetes ?
+### How to curl in kubernetes ?
 
 1. Curl a pod.
 - from another pod 
@@ -4490,7 +4525,7 @@ kubectl run curl-test --image=curlimages/curl --rm -it -- sh
 
 ##
 
-Most needed images for test. !!! !!! !!!
+### Most needed images for test. !!! !!! !!!
 
 1. The best.
 ```
@@ -4535,21 +4570,36 @@ aquasec/trivy
 williamyeh/wrk
 polandj/stress-ng
 codesenberg/bombardier
+brendangregg/perf-tools
 ```
 10. Ephemeral containers.
 ```
 kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<container-name>
 ```
-11. Others.
+11. Language specific.
+```
+lightruncom/koolkit-jvm 
+lightruncom/koolkit-node 
+lightruncom/koolkit-python
+```
+12. Others.
 ```
 alpine/k8s:1.XX #kubectl
 telepresence/telepresence #IDE
 sysdig/sysdig #what did my process before crashing ?
+jpetazzo/shpod #a heavy from J. Petazzoni
 ```
 
+```
+# Attach a netshoot container to a running pod to debug its network
+kubectl debug -it <pod-name> --image=nicolaka/netshoot --target=<container-name>
+
+# Run a standalone "temporary" pod for quick testing
+kubectl run tmp-shell --rm -it --image=alpine -- sh
+```
 ##
 
-Curl options for debug.
+### Curl options for debug.
 
 1. Visibility.
 ```
@@ -4618,7 +4668,7 @@ Size Download   :  %{size_download} bytes\n\n"'
 ```
 ##
 
-Installing Flannel and Calico
+### Installing Flannel and Calico
 
 Flannel (no netpol) and Calico (netpol ready)
 
@@ -4675,7 +4725,7 @@ kubectl -n kube-system get pods
 
 ##
 
-What to do when the service do not have an endpoint specified ?
+### What to do when the service do not have an endpoint specified ?
 
 - Unmatch between pods labels and service selector.
 - External service, service has no selector. The ep has to be created manually.
@@ -4730,7 +4780,7 @@ spec:
       targetPort: 5432     
 ```
 
-Summary Checklist
+### Summary Checklist
 
 1. Check Labels: Do Pod labels = Service selector ? !!! !!! !!!
 2. Check Readiness: Are Pods 1/1 Ready?
@@ -4739,22 +4789,22 @@ Summary Checklist
 
 ##
 
-What can we edit and not in a deploy, pod, svc, ... ?
+### What can we edit and not in a deploy, pod, svc, ... ?
 
 It depend on the controller managing the object and whether the field is immutable.
 
-Deployments / StatefulSets / DaemonSets: Almost everything can be edited.
-Services: You can edit ports, selectors, and types.
-Pods: Pods are highly immutable.
-ConfigMap / Secrets: Everything.
+- Deployments / StatefulSets / DaemonSets: Almost everything can be edited.
+- Services: You can edit ports, selectors, and types.
+- Pods: Pods are highly immutable.
+- ConfigMap / Secrets: Everything.
 
 Use explain to know what is immutable or editable.
 
 Common Immutable Fields:
 
-PersistentVolumeClaims: storageClassName and accessModes.
-Services: spec.clusterIP.
-Jobs: spec.selector (after creation).
+- PersistentVolumeClaims: storageClassName and accessModes.
+- Services: spec.clusterIP.
+- Jobs: spec.selector (after creation).
 
 Edit alternatives.
 - Replace.
@@ -4774,9 +4824,18 @@ export KUBE_EDITOR="code --wait"
 ```
 ##
 
+### beginning and end of line
+
 how to come to the begining and end of the line on mac book terminal ?
 
+- in macbook terminal
+option + arrows
+- in CKA prompt
+option + B (back) and option + F (forward)
+
 ##
+
+### external service
 
 ```
 kubectl  apply -f - <<EOF
@@ -4804,7 +4863,14 @@ no objects
 
 ##
 
-how to know which ingressclass to use when not specified ?
+### how to know which ingressclass to use when not specified ?
+
+The default ingress class is used.
+
+```
+annotations:
+  ingressclass.kubernetes.io/is-default-class: "true"
+```
 
 ##
 
@@ -5297,5 +5363,87 @@ diff /etc/kubernetes/manifests/*.yaml /tmp/kubernetes/manifests/*.yaml
 
 sudo journalctl -k
 
+###
 
+
+
+In the CKA (Certified Kubernetes Administrator) exam, "sabotage" scenarios are troubleshooting tasks where you are presented with a broken cluster and must restore functionality. The difficulty lies in the fact that the symptoms (e.g., `kubectl` not working) are often several layers removed from the actual root cause.
+
+Here are the most difficult sabotages ranked by complexity, including how to investigate them.
+
+---
+
+### 1. The "Dead" Control Plane (Static Pod Corruption)
+The most stressful scenario. You run `kubectl get nodes` and get: `The connection to the server <IP>:6443 was refused`.
+
+*   **The Sabotage:** A typo or incorrect path was introduced into the API Server or ETCD manifest files located in `/etc/kubernetes/manifests/`.
+*   **The Difficulty:** Since the API Server is down, `kubectl` is useless. You have to investigate using OS-level tools.
+*   **How to Investigate:**
+    1.  **SSH into the Control Plane.**
+    2.  **Check Container Runtime:** Run `crictl ps` (or `docker ps`). If you don't see the `kube-apiserver` container, the manifest is broken.
+    3.  **Inspect Manifests:** Check `/etc/kubernetes/manifests/kube-apiserver.yaml`. Look for typos in flag names (e.g., `--etcd-ca-file` misspelled) or incorrect file paths for certificates.
+    4.  **Check Kubelet Logs:** The Kubelet is responsible for starting these pods. Run `journalctl -u kubelet -f` to see why it's failing to launch the static pod.
+
+---
+
+### 2. Kubelet Configuration Sabotage (Node Level)
+A worker node shows a status of `NotReady`.
+
+*   **The Sabotage:** The Kubelet service is stopped, or its configuration file (`/var/lib/kubelet/config.yaml`) points to a non-existent directory or has an invalid parameter.
+*   **The Difficulty:** Beginners often try to "describe" the node from the control plane, but that doesn't show why the *service* failed on the worker.
+*   **How to Investigate:**
+    1.  **SSH into the affected Worker Node.**
+    2.  **Check Service Status:** `systemctl status kubelet`. If it says `active (failed)`, it’s a config issue.
+    3.  **Read the Logs:** `journalctl -u kubelet | tail -n 50`. Look for "failed to run Kubelet: unable to load init config".
+    4.  **Verify Certificates:** Ensure the Kubelet's client certificate (usually in `/var/lib/kubelet/pki/`) hasn't expired or hasn't been moved.
+
+---
+
+### 3. ETCD Port or Certificate Mismatch
+The API Server is down, and logs show "request timed out" or "remote error: tls: bad certificate."
+
+*   **The Sabotage:** The API Server is configured to talk to ETCD on the wrong port (e.g., `2380` instead of `2379`) or uses the wrong CA certificate to authenticate with ETCD.
+*   **The Difficulty:** This requires cross-referencing two different manifests (`kube-apiserver.yaml` and `etcd.yaml`).
+*   **How to Investigate:**
+    1.  Check the ETCD manifest to see which port it is listening on (`--listen-client-urls`).
+    2.  Check the API Server manifest flags starting with `--etcd-*`.
+    3.  **The "Gotcha":** Sometimes the ETCD certificates are moved to a different folder. Verify that the paths in the manifest actually exist on the host disk.
+
+---
+
+### 4. Broken CNI (Networking Isolation)
+Nodes are `Ready`, pods are `Running`, but pods cannot ping each other, and CoreDNS is failing.
+
+*   **The Sabotage:** The CNI (Container Network Interface) configuration file in `/etc/cni/net.d/` has been deleted or modified with an incorrect subnet.
+*   **The Difficulty:** Everything looks "Green" in `kubectl get pods`, but nothing works. This is a "silent" failure.
+*   **How to Investigate:**
+    1.  **Check CNI Pods:** `kubectl get pods -n kube-system` (look for Weave, Calico, or Flannel). Check their logs.
+    2.  **Inspect Node Config:** SSH into a node and check `/etc/cni/net.d/`. If it's empty, the node cannot assign IPs to pods.
+    3.  **Check Kube-Proxy:** If `kube-proxy` is failing, Service IPs (ClusterIP) will not work even if Pod IPs do.
+
+---
+
+### 5. Authentication / Kubeconfig Sabotage
+You are logged into the exam terminal, but every `kubectl` command returns `Unauthorized`.
+
+*   **The Sabotage:** The `~/.kube/config` file has been altered. The user client certificate path is wrong, or the `server:` field points to the wrong IP address.
+*   **The Difficulty:** It feels like the exam environment is broken rather than a task to solve.
+*   **How to Investigate:**
+    1.  **Check Current Context:** `kubectl config get-contexts`.
+    2.  **Verify Server IP:** Compare the IP in `~/.kube/config` with the actual internal IP of the master node.
+    3.  **Emergency Recovery:** If your user config is ruined, check `/etc/kubernetes/admin.conf`. This is the "root" config for the cluster. If you have sudo access, you can try `export KUBECONFIG=/etc/kubernetes/admin.conf` to see if that works.
+
+---
+
+### Investigation Summary Table
+
+| If you see this error... | Check this first... | Key Command |
+| :--- | :--- | :--- |
+| **Connection Refused** | Control Plane Manifests | `ls /etc/kubernetes/manifests/` |
+| **Node NotReady** | Kubelet Service | `systemctl status kubelet` |
+| **Pod Stuck in Pending** | Scheduler Manifest | `kubectl get pods -n kube-system` |
+| **DNS Lookup Failed** | CoreDNS & CNI | `kubectl logs -n kube-system -l k8s-app=kube-dns` |
+| **Unauthorized** | Kubeconfig file | `cat ~/.kube/config` |
+
+> **Pro-Tip for the Exam:** Always check your **Context** (`kubectl config use-context`) and ensure you are on the correct node before changing any files. If you change a manifest and the pod doesn't come back, **undo your change immediately** to return to a known state.
 
