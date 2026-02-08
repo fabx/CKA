@@ -4881,7 +4881,7 @@ WaitForFirstConsumer: The PVC stays in a Pending state until a Pod (the "consume
 
 ##
 
-kubectl create vs kubectl apply
+### kubectl create vs kubectl apply
 
 1. create 
 
@@ -4898,7 +4898,7 @@ kubectl create vs kubectl apply
 
 ##
 
-Just another debug set of commands.
+### Just another debug set of commands.
 
 📌 Pod Health (Start Here)
 
@@ -4966,28 +4966,9 @@ kubectl top pods -A --sort-by=memory
 ```
 ##
 
-```
-cat <<EOF | kubectl apply -f -
-apiVersion: certificates.k8s.io/v1
-kind: CertificateSigningRequest
-metadata:
-  name: john-developer 
-spec:
-  # This is an encoded CSR. Change this to the base64-encoded contents of myuser.csr
-  request: LSXXXXXXXXXXXXXXXXXXtCg==
-  signerName: kubernetes.io/kube-apiserver-client
-  expirationSeconds: 86400  # one day
-  usages:
-  - client auth
-EOF
+### where to find the pod IP name ? 
 
-kubectl get csr john-developer -o jsonpath='{.status.certificate}'| base64 -d > john.crt
-
-kubectl config set-credentials john --client-key=/root/CKA/john.key --client-certificate=john.crt --embed-certs=true
-```
-##
-
-where to find the pod IP name ? 
+search dns in the documentation
 
 ##
 
@@ -5007,9 +4988,9 @@ Both K8sGPT and HolmesGPT are leaders in the "AI SRE" movement, but they approac
 
 ##
 
-Which resource is strictly required to allow a Gateway in 'Namespace A' to reference an HTTPRoute in 'Namespace B' safely?
+### ReferenceGrant
 
-ReferenceGrant
+Which resource is strictly required to allow a Gateway in 'Namespace A' to reference an HTTPRoute in 'Namespace B' safely?
 
 This resource provides a formal handshake that allows cross-namespace references, ensuring the owner of the target namespace explicitly permits the access.
 
@@ -5046,22 +5027,28 @@ cross-namespace link.
 
 ##
 
+### GatewayClass uses parametersRef
+
 A Cluster Operator wants to apply a specific load-balancing algorithm (e.g., Least Connections) across all Gateways of a certain type. Where is the most appropriate place to define this implementation-specific configuration?
 
 The GatewayClass uses parametersRef to point to vendor-specific configurations that apply to all Gateways using that class.
 
 ##
 
+### gateway api policy attachment
+
 Policy Attachment is a core design pattern in the Gateway API intended to keep the main resources clean while allowing for extensible features.
 
 ##
+
+### one httpRoute to many gateways
 
 One HttpRoute can be attached to many Gateways.
 The 'parentRefs' field in a Route is a list, allowing one set of routing rules to be reused across different Gateways.
 
 ##
 
-La sécurité TLS d'une requête.
+### La sécurité TLS d'une requête.
 
 client  -->  downstream (flux descendant) --> gateway (nginx or kong) -->  upstream (flux montant) -->  service
 
@@ -5071,12 +5058,15 @@ TLS mode:
 
 ##
 
+### kubernetes enhancements
+
 https://github.com/kubernetes
 https://github.com/kubernetes/enhancements
 
 ##
 
-Ensure no CR in secrets
+### Ensure no CR in secrets
+
 ```bash
 # -n ensures no trailing newline/carriage return is added
 kubectl create secret generic my-secret --from-literal=password=$(echo -n 'my-password')
@@ -5142,7 +5132,7 @@ spec:
 
 ##
 
-When creating a storage solution what are the common solutions ?
+### When creating a storage solution what are the common solutions ?
 
 pv + pvc (static provisioning) : no provisionner or empty storageClassName
 pv + storageclass (dynamic provisioning) : the provisioner will specify the driver or the plugin (aws ebs, pd gce, local, ...)
@@ -5161,6 +5151,8 @@ SC + PVC (the PV is created by the SC)
 There is no way to get the PV or PVC created by the pod.
 
 ##
+
+### python3 -m http.server 8000
 
 To be trained on external services with endpointslice be able to build a web server from a python everywhere if needed.
 
@@ -5188,7 +5180,7 @@ python3 -m http.server 8000 -d /var/log/nginx
 ```
 ##
 
-This volume must be created on cluster1-node01
+### This volume must be created on cluster1-node01
 -> 
 ```yaml
   nodeAffinity:
@@ -5204,7 +5196,7 @@ This volume must be created on cluster1-node01
 
 ##
 
-How to verify the certificates are valid ?
+### How to verify the certificates are valid ?
 
 - PKI certificates and requirements (dcoumentation)
 - Certificate Management With Kubeadm (documentation)
@@ -5215,12 +5207,12 @@ kubeadm certs check-expiration
 cat /etc/kubernetes/manifests/kube-apiserver.yaml | grep -E "cert|key|ca"
 
 openssl x509 -in /etc/kubernetes/pki/apiserver.crt -text -noout
-
+```
 The logs will usually scream x509: certificate signed by unknown authority or no such file or directory if a path in the manifest is wrong.
 
 ##
 
-Verify a CNI plugin is OK.
+### Verify a CNI plugin is OK.
 
 Deploy two simple Pods (like nginx) on different nodes.
 
@@ -5230,7 +5222,9 @@ Try to ping the IP of the second Pod: ping <pod-b-ip>.
 
 ##
 
-The "Big Picture" Flow
+### The "Big Picture" Flow
+
+!!! !!! !!!
 
 When you run kubectl apply -f deployment.yaml, look at the "Chain of Command":
 1. Deployment Controller sees the new YAML $\rightarrow$ Creates a ReplicaSet.
@@ -5282,32 +5276,32 @@ Connectivity  Labels      The dynamic "glue" that ignores IPs and names.
 The "Aha!" Moment
 The biggest secret to understanding Kubernetes is realizing it is asynchronous. When you run a command, it doesn't happen instantly. You are just changing the "Desired State" in the database, and then waiting for the "Nervous System" (Controllers) to notice and react.
 
-###########
+##
 
-Investigations on kubectl unavailable.
+### Investigations on kubectl unavailable.
 
 VERIFY ENTRY POINT
 
 1. Is kube-apiserver running ?
-
+```
 crictl ps | grep kube-apiserver
-
+```
 2. Check port binding.
-
+```
 sudo netstat -tulnp | grep 6443
-
+```
 VERIFY THE CHAIN
 
 1. Kubelet
-
+```
 sudo systemctl status kubelet
 
 sudo journalctl -u kubelet -f
-
+```
 Common Issue: Look for "Certificate expired" or "CNI plugin not initialized."
 
 2. etcd
-
+```
 crictl ps | grep etcd
 
 #check etcd health
@@ -5316,27 +5310,27 @@ ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 \
   --cert=/etc/kubernetes/pki/etcd/healthcheck-client.crt \
   --key=/etc/kubernetes/pki/etcd/healthcheck-client.key \
   endpoint health
-
+```
 3. Manifests
 
 Check /etc/kubernetes/manifests
 
 3.1. Watch
-
+```
 watch -n 1 sudo crictl ps -a
-
+```
 3.2. Search for manifests errors in system logs
-
+```
 sudo journalctl -u kubelet | grep -i "manifest"
-
+```
 3.3. crictl logs
-
+```
 sudo crictl ps -a | grep kube-apiserver | head -n 1
 # Replace <ID> with the result from the command above
 sudo crictl logs <ID>
-
+```
 3.4. re launch
-
+```
 # 1. Move it out to your home folder
 sudo mv /etc/kubernetes/manifests/kube-apiserver.yaml ~/
 
@@ -5344,28 +5338,28 @@ sudo mv /etc/kubernetes/manifests/kube-apiserver.yaml ~/
 
 # 3. Move it back
 sudo mv ~/kube-apiserver.yaml /etc/kubernetes/manifests/
-
+```
 3.5. yaml linter
-
+```
 python3 -c 'import yaml, sys; yaml.safe_load(sys.stdin)' < /etc/kubernetes/manifests/kube-apiserver.yaml
-
+```
 
 3.6. kubeadm init dry-run
-
+```
 kubeadm init phase control-plane all --dry-run
 #This command will detect the file is missing and generate a brand-new one based on the configuration stored in the kubeadm-config ConfigMap in your cluster.
-
+```
 3.7. compare with a secondary control plane node
-
+```
 diff /etc/kubernetes/manifests/*.yaml /tmp/kubernetes/manifests/*.yaml
-
+```
 4. System
-
+```
 sudo journalctl -k
+```
+##
 
-###
-
-
+### CKA sabotages
 
 In the CKA (Certified Kubernetes Administrator) exam, "sabotage" scenarios are troubleshooting tasks where you are presented with a broken cluster and must restore functionality. The difficulty lies in the fact that the symptoms (e.g., `kubectl` not working) are often several layers removed from the actual root cause.
 
