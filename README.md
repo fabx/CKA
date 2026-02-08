@@ -2572,14 +2572,7 @@ Setting the `NodeName` field in a Pod's spec directly tells the `kubelet` on tha
 
 ##
 
-KCSA
-
-Setting `runAsNonRoot: true` ensures the container runs with a non-root user ID, and `readOnlyRootFilesystem: true` prevents the container from writing to its own filesystem.
-
-
-##
-
-Security
+### Security
 
 
 The main security benefit of a `scratch` image is its minimal attack surface, as it doesn't contain a shell or operating system files that could be exploited.
@@ -2602,9 +2595,11 @@ Mounting a volume to the `/var/log` directory is a common pattern to allow a con
 
 A custom `Seccomp` profile is a JSON file that defines a specific set of allowed syscalls, which is a common practice in the CKS exam.
 
+Setting `runAsNonRoot: true` ensures the container runs with a non-root user ID, and `readOnlyRootFilesystem: true` prevents the container from writing to its own filesystem.
+
 ##
 
-valueFrom
+### valueFrom
 
 valueFrom is used to set the value of an env var.
 It could be: 
@@ -2615,7 +2610,7 @@ It could be:
 
 ##
 
-Multicontainer
+### Multicontainer
 
 ```yaml
 apiVersion: v1
@@ -2653,11 +2648,11 @@ spec:
   volumes:
     - name: shared-volume
       emptyDir: {}      #shared not persistent
-````
+```
 
 ##
 
-Install cri docker
+### Install cri docker
 
 ```
 dpkg -i /root/cri-docker_0.3.16.3-0.debian.deb
@@ -2670,7 +2665,7 @@ systemctl daemon-reload #may be needed
 
 ##
 
-Install with kubeadm
+### Install with kubeadm
 ```
 vim /etc/apt/sources.list.d/kubernetes.list #master and node
 
@@ -2728,14 +2723,14 @@ etcdctl snapshot save --cacert=/etc/kubernetes/pki/etcd/ca.crt --cert=/etc/kuber
 
 ##
 
-Volumes
+### Retain policy
 
 The `Retain` policy ensures the underlying storage is not deleted. The PV object transitions to a `Released` state, requiring an administrator to manually clean it up before it can be reused.
 The data remains on the volume.
 
 ##
 
-Rollinupdate
+### Rollinupdate
 
 Updating the container image tag in the pod template is the standard trigger for a rolling update, causing Kubernetes to create new pods with the new image.
 
@@ -2743,7 +2738,7 @@ During a `RollingUpdate`, for a time, pods from both the old and new ReplicaSets
 
 ##
 
-Etcdctl
+### Etcdctl
 
 etcdctl snapshot save
 etcdctl snapshot restore
@@ -2752,13 +2747,19 @@ To restore the snapshot to a new `etcd` instance, you must have the same TLS cer
 
 ##
 
+### endpointslice conroller
+
 The `endpointslice-controller`, which runs inside the `kube-controller-manager`, is responsible for creating and managing `EndpointSlices` based on the pods that match a service's selector.
 
 ##
 
+### API client certificate
+
 The API server is configured with a Certificate Authority (CA). Any client certificate signed by this CA is considered authentic.
 
 ##
+
+### debug with --copy-to
 
 This command correctly uses the `--copy-to` flag to create a new pod named `my-pod-debug` as a copy of the original and attaches an interactive terminal.
 kubectl debug my-pod -it --copy-to=my-pod-debug --image=busybox -- /bin/sh
@@ -2766,17 +2767,25 @@ This will create a copy of my-pod but replace the container's image with busybox
 
 ##
 
+### kubedam manages cert renewal
+
 `kubeadm` enables automatic certificate renewal for control plane components as part of the `kubeadm upgrade` process. Running this command manually is an alternative but not the automatic mechanism.
 
 ##
+
+### Network policies requires an enabled CNI plugin.
 
 `NetworkPolicy` resources are just objects in the API server; a CNI plugin like Calico, Cilium, or Weave Net is required to actually implement and enforce the firewall rules they define.
 
 ##
 
+### kubelet conf can be used to find api server endpoint
+
 The kubelet is a client of the API server and, like `kubectl`, uses a kubeconfig file (often located at `/etc/kubernetes/kubelet.conf`) to find the server's endpoint and credentials.
 
 ##
+
+### VPA
 
 VPA !!! !!! !!!
 ```
@@ -2812,8 +2821,7 @@ metadata:
 
 ##
 
-5
-create a user, csr, role, ...
+### create a user, csr, role, ...
 ```yaml
 ---
 apiVersion: certificates.k8s.io/v1
@@ -2840,7 +2848,7 @@ kubectl auth can-i update pods --as=john --namespace=development
 ```
 ##
 
-Give access alice to kubernetes cluster
+### Give access alice to kubernetes cluster
 
 https://kubernetes.io/docs/tasks/tls/certificate-issue-client-csr/
 KEYWORDS client csr
@@ -2914,7 +2922,7 @@ kubectl --context=alice-context get pods -n default
 ```
 ##
 
-DNS resolver
+### DNS resolver
 
 https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
 KEYWORDS nslookup pod
@@ -2937,7 +2945,7 @@ kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nsloo
 ```
 ##
 
-create user john
+### create user john
 ```
 openssl genrsa -out john.key 2048
 
@@ -2970,7 +2978,7 @@ kubectl create role developer --verb=create --verb=get --verb=list --verb=update
 
 ##
 
-Kubernetes debug and investigation tips and tricks.
+### Kubernetes debug and investigation tips and tricks.
 ```
 kubectl get events --sort-by=.metadata.creationTimestamp
 #OK in kubectl cheat sheet
@@ -3042,7 +3050,7 @@ use securityContext at the Pod and Container levels to set runAsUser, runAsGroup
 ```
 ##
 
-#### UPGRADE KUBERNETES CLUSTER WITH KUBEADM
+### UPGRADE KUBERNETES CLUSTER WITH KUBEADM
 
 I. Plan -> Control Plane (Master)
 ```
@@ -3124,7 +3132,7 @@ kubectl run test-client --image=busybox --restart=Never --rm -it -- wget -O- x.x
 
 ##
 
-#### Debug Kubernetes
+### Debug Kubernetes
 
 Debugging Kubernetes is a structured process that moves from observing high-level status down to inspecting application code and low-level cluster components. 
 The best tips focus on a systematic drill-down using native kubectl commands before resorting to more complex tools.
@@ -3201,7 +3209,7 @@ By following these steps, you can quickly and efficiently isolate whether an iss
 
 ##
 
-ip forwarding
+### ip forwarding
 
 ```
 persist ip_forwarding in systemd
@@ -3217,6 +3225,8 @@ sysctl net.ipv4.ip_forward
 
 ##
 
+### dpkg -i
+
 ```
 dpkg -i cri-dockerd_0.3.16.3-0.ubuntu-jammy_amd64.deb
 sudo systemctl enable --now cri-docker.service
@@ -3227,7 +3237,9 @@ sysctl -p #apply
 
 ##
 
-pvc pending due to accessMode misma# vi pvc.yaml
+### pvc pending due to accessMode mismatch
+```
+# vi pvc.yaml
 
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -3239,8 +3251,10 @@ spec:
     - ReadWriteOnce        # fix access mode to match PV object
   resources:
     ...
-
+```
 ##
+
+### resume deploy
 
 If up-to-date is 0
 do
@@ -3248,15 +3262,9 @@ kubectl rollout resume deploy xxx
 
 ##
 
+### VPA example
 
-helm lint /opt/webapp-color-apd/
-
-helm install webapp-color-apd -n frontend-apd /opt/webapp-color-apd
-
-
-##
-
-
+```
 kubectl create -n cka24456 -f - <<EOF
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
@@ -3271,14 +3279,16 @@ spec:
   updatePolicy:
     updateMode: "Auto"
 EOF
-
+```
 ##
 
-codedns config is stored in a configmap
-
+### codedns config is stored in a configmap
+```
 kubectl edit cm -n kube-system coredns
-
+```
 ##
+
+### install flannel
 
 wget https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 
@@ -3298,8 +3308,8 @@ kubectl apply -f kube-flannel.yml
 
 ##
 
-Systemd - systemctl
-
+### Systemd - systemctl
+```
 in /etc/systemd/system/xxx.service
 
 [Unit]
@@ -3344,6 +3354,7 @@ systemctl list-units #only active
 journalctl 
 journalctl -b #for the current boot
 journalctl -u docker.service
+```
 
 Get a list of all services associated with kubernetes.
 ```
@@ -3353,7 +3364,7 @@ systemctl list-unit-files --type service --all | grep kube
 
 ##
 
-Check the readiness status of the kubernetes api server.
+### Check the readiness status of the kubernetes api server.
 
 ```
 kubectl get --raw='/readyz?verbose' 
@@ -3361,7 +3372,7 @@ kubectl get --raw='/readyz?verbose'
 
 ##
 
-Investigation Summary
+### Investigation Summary
 
 CLUSTER - NODES
 
@@ -3407,7 +3418,7 @@ kubectl describe ingress|gateway
 kubectl run -it --rm debug --image=busybox --restart=Never -- sh
 # Inside the pod:
 wget <service-name>:<port>
-````
+```
 
 ADVANCED
 
@@ -3425,7 +3436,7 @@ sudo journalctl -u kubelet --since "5m" -e
 
 ##
 
-This is a good example of using args to pass shell code.
+### This is a good example of using args to pass shell code.
 
 ```yaml
 spec:
@@ -3449,8 +3460,7 @@ spec:
 
 ##
 
-
-How to debug with crictl
+### How to debug with crictl
 
 1. Find the container runtime endpoint.
 
@@ -3512,7 +3522,7 @@ crictl inspect <container-id>
 ```
 ##
 
-Key Functions and Modes of kubectl debug
+### Key Functions and Modes of kubectl debug
 
 The command has three main modes of operation:
 
@@ -3556,7 +3566,8 @@ This command creates a new Pod on the target node where the root directory (/) o
 
 ##
 
-More linux tips and tricks
+### More linux tips and tricks
+
 ```
 ss -tunl
 #to see the listening ports
@@ -3598,7 +3609,8 @@ sudo lsof -i :<port>
 
 ##
 
-log locations to search api server crash !!!
+### log locations to search api server crash !!!
+
 ```
 /var/log/pods/
 /var/log/containers/
@@ -3613,7 +3625,8 @@ tail -f /var/log/syslog
 ```
 ##
 
-We can get logs from all containers
+### We can get logs from all containers
+
 ```
 kubectl -n management logs --all-containers deploy/collect-data > /root/logs.log
 ```
@@ -3621,14 +3634,15 @@ kubectl -n management logs --all-containers deploy/collect-data > /root/logs.log
 
 ##
 
-Get the labels from a ns. !!! !!!
+### Get the labels from a ns. !!! !!!
+
 ```
 kubectl get ns --show-labels
 kubectl get all --show-labels
 ```
 ##
 
-Network policies
+### Network policies
 
 ```yaml
 podSelector: {} #all pods
@@ -3673,7 +3687,7 @@ The standard directory to store CA, API server and etcd certificates is /etc/kub
 
 ##
 
-Install containerd
+### Install containerd
 ```
 sudo mkdir -p /usr/local/containerd
 sudo tar Cxzvf /usr/local https://github.com/containerd/containerd/releases/download/v2.0.4/containerd-2.0.4-linux-amd64.tar.gz
@@ -3720,14 +3734,14 @@ sudo systemctl enable --now containerd
 
 ##
 
-Tips and tricks on kubernetes service investigation.
+### Tips and tricks on kubernetes service investigation.
 
 Endpoints: kubectl get endpoints <service-name>. If this is empty, your Service labels don't match your Pod labels.
 kubectl get pods, svc -l xxx
 
 ##
 
-Investigating kube-api access issues
+### Investigating kube-api access issues !!!
 
 CAN-I ?
 
@@ -3773,8 +3787,7 @@ kubectl get pods --v=8
 ```
 ##
 
-Tips and tricks working with multicontainers.
-
+### Tips and tricks working with multicontainers.
 
 1. Lifecycle.
 Native sidecars that start before the app but stay running.
@@ -3799,11 +3812,11 @@ volumes:
 kubectl logs <pod-name> -c <container-name>
 kubectl exec -it <pod-name> -c <container-name> -- /bin/sh
 kubectl logs <pod-name> --all-containers
-````
+```
 
 ##
 
-The different ports.
+### The different ports.
 
 |containerPort       |Pod/Deployment  |The port your application code is actually listening on (e.g., Node.js on 3000).|
 |targetPort          |Service         |The port the Service sends traffic to. It must match the containerPort.|
@@ -3812,7 +3825,8 @@ The different ports.
 
 ##
 
-The Lifecycle of a Request (Visualizing the Strategy)
+### The Lifecycle of a Request (Visualizing the Strategy)
+
 Imagine a user visiting your website. Here is how the ports line up in a professional "Production Strategy":
 
 User Browser: Hits the Load Balancer on Port 443.
@@ -3872,7 +3886,7 @@ NodePort Services,  30000–32767,  External traffic range.
 
 ##
 
-links
+### links
 
 https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/#backing-up-an-etcd-cluster
 
@@ -3884,7 +3898,7 @@ https://kubernetes.io/docs/concepts/storage/persistent-volumes/
 
 ##
 
-vi tips and tricks
+### vi tips and tricks
 
 :set list
 :set paste
@@ -3894,7 +3908,7 @@ G #go to bottom line
 
 ##
 
-other tips
+### other tips
 
 The Trick: Use --force and --grace-period=0.
 
@@ -3911,6 +3925,8 @@ Vim: echo "set ts=2 sw=2 et" > ~/.vimrc
 Shell: export do="--dry-run=client -o yaml" (Usage: k run pod1 --image=nginx $do > p1.yaml)
 
 ##
+
+### Adding a user
 
 ```
 /root/CKA/john.csr 
@@ -3960,7 +3976,7 @@ kubectl run test-nslookup --image=busybox:1.28 --rm -it --restart=Never -- nsloo
 
 ##
 
-allow all on one port
+### allow all on one port
 
 ---
 ```yaml
@@ -4055,7 +4071,7 @@ spec:
 
 ##
 
-A gateway listener has a hostname and an allowedroutes.
+### A gateway listener has a hostname and an allowedroutes.
 
 Here is an example.
 ```yaml
