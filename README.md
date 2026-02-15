@@ -58,6 +58,9 @@ https://raghu.sh/new-cka-exam-tips-tricks-ft-gateway-api-cni-cri-csi-helm-kustom
 https://devopscube.com/
 https://devopscube.com/cka-exam-study-guide/
 
+KodeKloud notes
+https://arc.net/l/quote/suctajpu
+
 
 ## QUESTIONS
 
@@ -5440,4 +5443,65 @@ You are logged into the exam terminal, but every `kubectl` command returns `Unau
 | **Unauthorized** | Kubeconfig file | `cat ~/.kube/config` |
 
 > **Pro-Tip for the Exam:** Always check your **Context** (`kubectl config use-context`) and ensure you are on the correct node before changing any files. If you change a manifest and the pod doesn't come back, **undo your change immediately** to return to a known state.
+
+How to call the kubernetes api from a pod ?
+
+When a pod is created, Kubernetes automatically mounts a folder into the container at: /var/run/secrets/kubernetes.io/serviceaccount/
+
+Inside this folder, you will find three files:
+- token: The JWT token you use to authenticate.
+- ca.crt: The certificate to verify the API server's identity.
+- namespace: A text file containing the pod's current namespace.
+
+By default, the "default" service account has no permissions. If you try to call the API, you'll get a 403 Forbidden. You must grant the pod permission using RBAC (Role-Based Access Control).
+
+Using curl: the manual way:
+# Point to the internal API server hostname
+APISERVER=https://kubernetes.default.svc
+
+# Path to the service account token
+TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+
+# Path to the CA cert
+CACERT=/var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+
+# Make the request
+curl --cacert $CACERT --header "Authorization: Bearer $TOKEN" -X GET $APISERVER/api/v1/namespaces/default/pods
+
+You would also use language library from Go or Python that will manage certificates and token for you.
+
+##
+
+The diff between kubectl delete pod --now and kubectl delete pod --grace-period=0
+
+Feature,        kubectl delete pod --now,                       kubectl delete pod --force --grace-period=0
+Equivalent to,  --grace-period=1,                               Immediate API removal
+Shutdown Signal,"Sends SIGTERM, waits 1 second, then SIGKILL.", Tells the API to delete the record now; might not signal the pod at all.
+API Status,     Wait for confirmation from the Node.,           Does not wait for confirmation.
+Safety,         Safe. Allows a tiny bit of cleanup.             "Dangerous. Can lead to ""Zombie"" processes or data corruption."
+
+##
+
+How to investigate is the service has no endpoint.
+
+# Get service selector
+kubectl get svc <service-name> -o jsonpath='{.spec.selector}'
+
+# Get pod labels
+kubectl get pods --show-labels
+
+# or BETTER
+
+kubectl get svc -o wide
+#then copy - paste the selector from the "SELECTOR" column
+kubectl get pods -l <pasted selector>
+##
+
+
+### restart a deployment (k9s deploy restart)
+
+```
+kubectl rollout restart deployment xxx
+```
+
 
